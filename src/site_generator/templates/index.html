@@ -86,6 +86,9 @@
                             <th data-sort="roic" data-type="number">ROIC</th>
                             <th data-sort="fcf_yield" data-type="number">FCF Yield</th>
                             <th data-sort="de" data-type="number">D/E</th>
+                            <th>Revenue</th>
+                            <th>EPS</th>
+                            <th>FCF</th>
                             <th data-sort="mcap" data-type="number">Mkt Cap</th>
                             <th>Links</th>
                         </tr>
@@ -137,6 +140,9 @@
                             <td class="num" data-col="de" data-value="{{ c.debt_to_equity or 0 }}">
                                 {{ c.debt_to_equity|fmt_num(2) }}
                             </td>
+                            <td class="sparkline-cell">{{ c.sparklines.revenue|sparkline }}</td>
+                            <td class="sparkline-cell">{{ c.sparklines.eps|sparkline }}</td>
+                            <td class="sparkline-cell">{{ c.sparklines.fcf|sparkline }}</td>
                             <td class="num" data-col="mcap" data-value="{{ c.market_cap }}">
                                 {{ c.market_cap|fmt_dollar }}
                             </td>

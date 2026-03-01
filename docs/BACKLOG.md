@@ -120,7 +120,7 @@
 | 5.4 | JS: table sorting & filtering | ✅ DONE | Vanilla JS, sector/signal/search filters |
 | 5.5 | Methodology section/page | ✅ DONE | Graham-Buffett methodology explanation |
 | 5.6 | Disclaimer banner | ✅ DONE | Prominent, always visible on all pages |
-| 5.7 | Sparklines / mini-charts (CSS/SVG) | ⬜ TODO | Future enhancement |
+| 5.7 | Sparklines / mini-charts (CSS/SVG) | ✅ DONE | Inline SVG with trend-colored polylines (green/red/yellow) |
 | 5.8 | Color-coded signals | ✅ DONE | Green/amber/red signal badges + score bars |
 | 5.9 | Mobile responsiveness | ✅ DONE | Responsive grid, stacking on mobile |
 | 5.10 | Offline verification | ✅ DONE | No CDN dependencies — fully self-contained |
@@ -138,7 +138,7 @@
 | 6.1 | Error handling hardening | ✅ DONE | Missing data, API failures, edge cases handled |
 | 6.2 | Partial-run resume capability | ⬜ TODO | Future: don't re-scan completed tickers |
 | 6.3 | Full test suite pass | ⬜ TODO | Future: pytest unit + integration tests |
-| 6.4 | README.md | ⬜ TODO | Project overview, setup, usage |
+| 6.4 | README.md | ✅ DONE | Comprehensive docs: architecture, pipeline, CLI, config |
 | 6.5 | GitHub Pages config verification | ⬜ TODO | Root deployment, index.html served |
 | 6.6 | First full production run | ✅ DONE | 903 tickers → 20 candidates, 883 rejected, 0 errors |
 | 6.7 | Review & tune thresholds | ✅ DONE | P/E adjusted to 15 (Graham's Intelligent Investor criterion) |
@@ -164,7 +164,7 @@
 | F.11 | International markets (Europe, Asia) | Low | Expand universe beyond US |
 | F.12 | Piotroski F-Score integration | Medium | Additional financial health metric |
 | F.13 | Unit test suite (pytest) | Medium | Coverage for all stages, edge cases |
-| F.14 | Sparkline mini-charts | Low | CSS/SVG trend indicators |
+| F.14 | ~~Sparkline mini-charts~~ | ✅ DONE | Moved to Sprint 5.7 |
 
 ---
 
@@ -177,6 +177,6 @@
 | Sprint 2 — Pipeline A–C | 9 | 8 | █████████████████░░░ 89% |
 | Sprint 3 — Valuation D–E | 10 | 8 | ████████████████░░░░ 80% |
 | Sprint 4 — Scoring & Reports | 10 | 9 | ██████████████████░░ 90% |
-| Sprint 5 — Static Site | 12 | 11 | ██████████████████░░ 92% |
-| Sprint 6 — Polish | 8 | 4 | ██████████░░░░░░░░░░ 50% |
-| **TOTAL** | **67** | **57** | **████████████████░░░░ 85%** |
+| Sprint 5 — Static Site | 12 | 12 | ████████████████████ 100% |
+| Sprint 6 — Polish | 8 | 5 | ████████████░░░░░░░░ 63% |
+| **TOTAL** | **67** | **59** | **█████████████████░░░ 88%** |

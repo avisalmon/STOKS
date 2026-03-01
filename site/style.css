@@ -275,6 +275,15 @@ footer {
 .empty-state .icon { font-size: 3rem; margin-bottom: 16px; }
 .empty-state h3 { font-size: 1.2rem; margin-bottom: 8px; color: var(--text-primary); }
 
+/* Sparkline */
+.sparkline-cell { padding: 4px 8px; text-align: center; }
+.sparkline-cell svg.sparkline { vertical-align: middle; }
+.sparkline-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin: 20px 0; }
+.sparkline-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; text-align: center; }
+.sparkline-card .sparkline-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+.sparkline-card .sparkline-chart { display: flex; justify-content: center; }
+.sparkline-card svg.sparkline { display: block; }
+
 /* Responsive */
 @media (max-width: 768px) {
     .container { padding: 0 16px; }

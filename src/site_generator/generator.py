@@ -24,6 +24,7 @@ from typing import Any
 
 import pandas as pd
 from jinja2 import Environment, FileSystemLoader
+from markupsafe import Markup
 from loguru import logger
 
 from src.run_manager import RunManager
@@ -64,6 +65,7 @@ def generate_site(
     env.filters["fmt_dollar"] = _fmt_dollar
     env.filters["signal_class"] = _signal_class
     env.filters["signal_label"] = _signal_label
+    env.filters["sparkline"] = _sparkline_svg
 
     # Prepare template data
     candidates = results.get("candidates", [])
@@ -148,6 +150,7 @@ def _build_candidate_row(c: dict) -> dict:
         "debt_to_equity": data.metrics.debt_to_equity if data else None,
         "intrinsic_low": _safe_min(c.get("intrinsic_range", {})),
         "intrinsic_high": _safe_max(c.get("intrinsic_range", {})),
+        "sparklines": _extract_sparkline_data(data),
     }
 
 
@@ -193,6 +196,7 @@ def _build_ticker_detail(c: dict) -> dict:
         "stage_f": stages.get("f", {}),
         "income_history": [],
         "cashflow_history": [],
+        "sparklines": _extract_sparkline_data(data),
     }
 
     if data and data.metrics:
@@ -292,6 +296,89 @@ def _safe_min(d: dict) -> float | None:
 def _safe_max(d: dict) -> float | None:
     vals = [v for v in d.values() if v is not None and isinstance(v, (int, float))]
     return max(vals) if vals else None
+
+
+def _sparkline_svg(
+    values: list,
+    width: int = 80,
+    height: int = 24,
+    color: str = "#58a6ff",
+    fill: bool = True,
+) -> str:
+    """Generate an inline SVG sparkline from a list of numeric values."""
+    nums = [float(v) for v in values if v is not None and v == v]  # filter NaN
+    if len(nums) < 2:
+        return ""
+    vmin = min(nums)
+    vmax = max(nums)
+    vrange = vmax - vmin if vmax != vmin else 1
+    pad = 1  # 1px padding
+    w = width - 2 * pad
+    h = height - 2 * pad
+    points = []
+    for i, v in enumerate(nums):
+        x = pad + (i / (len(nums) - 1)) * w
+        y = pad + h - ((v - vmin) / vrange) * h
+        points.append(f"{x:.1f},{y:.1f}")
+    polyline = " ".join(points)
+    # Determine trend color: green if last > first, red if declining
+    trend_color = color
+    if nums[-1] > nums[0] * 1.02:
+        trend_color = "#3fb950"  # green
+    elif nums[-1] < nums[0] * 0.98:
+        trend_color = "#f85149"  # red
+    else:
+        trend_color = "#d29922"  # yellow (flat)
+    fill_path = ""
+    if fill:
+        fill_points = f"{pad:.1f},{pad + h:.1f} " + polyline + f" {pad + w:.1f},{pad + h:.1f}"
+        fill_path = (
+            f'<polygon points="{fill_points}" '
+            f'fill="{trend_color}" fill-opacity="0.12" />'
+        )
+    svg = (
+        f'<svg class="sparkline" width="{width}" height="{height}" '
+        f'viewBox="0 0 {width} {height}" xmlns="http://www.w3.org/2000/svg">'
+        f'{fill_path}'
+        f'<polyline points="{polyline}" fill="none" '
+        f'stroke="{trend_color}" stroke-width="1.5" stroke-linecap="round" '
+        f'stroke-linejoin="round" />'
+        f'<circle cx="{points[-1].split(",")[0]}" cy="{points[-1].split(",")[1]}" '
+        f'r="2" fill="{trend_color}" />'
+        f'</svg>'
+    )
+    return Markup(svg)
+
+
+def _extract_sparkline_data(data) -> dict[str, list]:
+    """Extract sparkline-ready lists from TickerData financial history."""
+    sparklines: dict[str, list] = {
+        "revenue": [],
+        "eps": [],
+        "net_income": [],
+        "fcf": [],
+    }
+    if data is None or data.financials is None:
+        return sparklines
+    inc = data.financials.income
+    if inc is not None and not inc.empty:
+        for year in sorted(inc.index):
+            if "revenue" in inc.columns:
+                v = inc.loc[year, "revenue"]
+                sparklines["revenue"].append(float(v) if pd.notna(v) else None)
+            if "eps" in inc.columns:
+                v = inc.loc[year, "eps"]
+                sparklines["eps"].append(float(v) if pd.notna(v) else None)
+            if "net_income" in inc.columns:
+                v = inc.loc[year, "net_income"]
+                sparklines["net_income"].append(float(v) if pd.notna(v) else None)
+    cf = data.financials.cashflow
+    if cf is not None and not cf.empty:
+        for year in sorted(cf.index):
+            if "free_cash_flow" in cf.columns:
+                v = cf.loc[year, "free_cash_flow"]
+                sparklines["fcf"].append(float(v) if pd.notna(v) else None)
+    return sparklines
 
 
 # ---------------------------------------------------------------------------
@@ -589,6 +676,15 @@ footer {
 }
 .empty-state .icon { font-size: 3rem; margin-bottom: 16px; }
 .empty-state h3 { font-size: 1.2rem; margin-bottom: 8px; color: var(--text-primary); }
+
+/* Sparkline */
+.sparkline-cell { padding: 4px 8px; text-align: center; }
+.sparkline-cell svg.sparkline { vertical-align: middle; }
+.sparkline-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin: 20px 0; }
+.sparkline-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; text-align: center; }
+.sparkline-card .sparkline-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+.sparkline-card .sparkline-chart { display: flex; justify-content: center; }
+.sparkline-card svg.sparkline { display: block; }
 
 /* Responsive */
 @media (max-width: 768px) {

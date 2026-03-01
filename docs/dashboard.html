@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>STOKS — Project Dashboard</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #21262d;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --green: #3fb950;
+      --yellow: #d29922;
+      --red: #f85149;
+      --blue: #58a6ff;
+      --purple: #bc8cff;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.25rem;
+      color: var(--text);
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+      font-size: 0.95rem;
+    }
+
+    /* Overview cards */
+    .overview {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      text-align: center;
+    }
+
+    .card .number {
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .card .label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .card.total .number { color: var(--accent); }
+    .card.done .number { color: var(--green); }
+    .card.progress .number { color: var(--yellow); }
+    .card.todo .number { color: var(--text-muted); }
+    .card.pct .number { color: var(--purple); }
+
+    /* Sprint progress bars */
+    .sprints {
+      margin-bottom: 2.5rem;
+    }
+
+    .sprints h2 {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    .sprint-row {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 0.75rem;
+      display: grid;
+      grid-template-columns: 260px 1fr 80px;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .sprint-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .sprint-name small {
+      display: block;
+      color: var(--text-muted);
+      font-weight: 400;
+      font-size: 0.8rem;
+    }
+
+    .bar-track {
+      background: var(--surface2);
+      border-radius: 6px;
+      height: 20px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 6px;
+      transition: width 0.5s ease;
+      position: relative;
+    }
+
+    .bar-fill.green { background: linear-gradient(90deg, #238636, #3fb950); }
+    .bar-fill.yellow { background: linear-gradient(90deg, #9e6a03, #d29922); }
+    .bar-fill.gray { background: var(--surface2); }
+
+    .sprint-pct {
+      text-align: right;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    /* Task tables */
+    .sprint-detail {
+      margin-bottom: 2rem;
+    }
+
+    .sprint-detail h3 {
+      font-size: 1.1rem;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+    }
+
+    th {
+      text-align: left;
+      padding: 0.6rem 0.75rem;
+      background: var(--surface2);
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    td {
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tr:hover td {
+      background: var(--surface);
+    }
+
+    .status {
+      display: inline-block;
+      padding: 0.15rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .status.done { background: rgba(63, 185, 80, 0.15); color: var(--green); }
+    .status.wip { background: rgba(210, 153, 34, 0.15); color: var(--yellow); }
+    .status.todo { background: rgba(139, 148, 158, 0.1); color: var(--text-muted); }
+    .status.blocked { background: rgba(248, 81, 73, 0.15); color: var(--red); }
+
+    .backlog-section { margin-top: 2.5rem; }
+    .backlog-section h2 { margin-bottom: 1rem; }
+
+    .footer {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      text-align: center;
+    }
+
+    .dep-tag {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .sprint-row {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+      }
+      .sprint-pct { text-align: left; }
+      .overview { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>STOKS — Project Dashboard</h1>
+    <p class="subtitle">Value Investing Scanner &amp; Analysis Pipeline &bull; Sprint Tracking Overview</p>
+
+    <!-- Overview Cards -->
+    <div class="overview">
+      <div class="card total">
+        <div class="number">66</div>
+        <div class="label">Total Tasks</div>
+      </div>
+      <div class="card done">
+        <div class="number">7</div>
+        <div class="label">Completed</div>
+      </div>
+      <div class="card progress">
+        <div class="number">0</div>
+        <div class="label">In Progress</div>
+      </div>
+      <div class="card todo">
+        <div class="number">59</div>
+        <div class="label">TODO</div>
+      </div>
+      <div class="card pct">
+        <div class="number">11%</div>
+        <div class="label">Overall</div>
+      </div>
+    </div>
+
+    <!-- Sprint Progress Bars -->
+    <div class="sprints">
+      <h2>Sprint Progress</h2>
+
+      <div class="sprint-row">
+        <div class="sprint-name">Sprint 0 — Project Setup<small>Repo, spec, tooling, scaffolding</small></div>
+        <div class="bar-track"><div class="bar-fill green" style="width: 100%"></div></div>
+        <div class="sprint-pct" style="color: var(--green)">100%</div>
+      </div>
+
+      <div class="sprint-row">
+        <div class="sprint-name">Sprint 1 — Foundation &amp; Data<small>Config, provider, caching, universe, CLI</small></div>
+        <div class="bar-track"><div class="bar-fill gray" style="width: 0%"></div></div>
+        <div class="sprint-pct" style="color: var(--text-muted)">0%</div>
+      </div>
+
+      <div class="sprint-row">
+        <div class="sprint-name">Sprint 2 — Pipeline A–C<small>Hard filters, quality scoring, cyclicality</small></div>
+        <div class="bar-track"><div class="bar-fill gray" style="width: 0%"></div></div>
+        <div class="sprint-pct" style="color: var(--text-muted)">0%</div>
+      </div>
+
+      <div class="sprint-row">
+        <div class="sprint-name">Sprint 3 — Valuation D–E<small>Intrinsic value, MOS, trap detection</small></div>
+        <div class="bar-track"><div class="bar-fill gray" style="width: 0%"></div></div>
+        <div class="sprint-pct" style="color: var(--text-muted)">0%</div>
+      </div>
+
+      <div class="sprint-row">
+        <div class="sprint-name">Sprint 4 — Scoring &amp; Reports<small>Final score, signals, MD/JSON/CSV</small></div>
+        <div class="bar-track"><div class="bar-fill gray" style="width: 0%"></div></div>
+        <div class="sprint-pct" style="color: var(--text-muted)">0%</div>
+      </div>
+
+      <div class="sprint-row">
+        <div class="sprint-name">Sprint 5 — Static Site<small>index.html, ticker pages, GitHub Pages</small></div>
+        <div class="bar-track"><div class="bar-fill gray" style="width: 0%"></div></div>
+        <div class="sprint-pct" style="color: var(--text-muted)">0%</div>
+      </div>
+
+      <div class="sprint-row">
+        <div class="sprint-name">Sprint 6 — Polish &amp; Testing<small>Hardening, docs, first production run</small></div>
+        <div class="bar-track"><div class="bar-fill gray" style="width: 0%"></div></div>
+        <div class="sprint-pct" style="color: var(--text-muted)">0%</div>
+      </div>
+    </div>
+
+    <!-- Sprint 0 Detail -->
+    <div class="sprint-detail">
+      <h3>Sprint 0 — Project Setup ✅</h3>
+      <table>
+        <thead><tr><th>ID</th><th>Task</th><th>Status</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>0.1</td><td>Initialize git repository</td><td><span class="status done">Done</span></td><td></td></tr>
+          <tr><td>0.2</td><td>Create .gitignore</td><td><span class="status done">Done</span></td><td>env/, __pycache__/, runs/, .cache/</td></tr>
+          <tr><td>0.3</td><td>Write SPEC_v1.0.md</td><td><span class="status done">Done</span></td><td>Full Graham-Buffett protocol</td></tr>
+          <tr><td>0.4</td><td>Create requirements.txt</td><td><span class="status done">Done</span></td><td>yfinance, pandas, jinja2, click, etc.</td></tr>
+          <tr><td>0.5</td><td>Create .github/INSTRUCTIONS.md</td><td><span class="status done">Done</span></td><td>Dev workflow, env rules</td></tr>
+          <tr><td>0.6</td><td>Create Copilot skills</td><td><span class="status done">Done</span></td><td>scan-stocks + analyze-stock</td></tr>
+          <tr><td>0.7</td><td>Create backlog &amp; dashboard</td><td><span class="status done">Done</span></td><td>BACKLOG.md + dashboard.html</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Sprint 1 Detail -->
+    <div class="sprint-detail">
+      <h3>Sprint 1 — Foundation &amp; Data Layer</h3>
+      <table>
+        <thead><tr><th>ID</th><th>Task</th><th>Status</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>1.1</td><td>Create src/ package structure</td><td><span class="status todo">TODO</span></td><td>__init__.py, main.py, subpackages</td></tr>
+          <tr><td>1.2</td><td>Implement config.py + config.yaml</td><td><span class="status todo">TODO</span></td><td>Load/validate YAML config with defaults</td></tr>
+          <tr><td>1.3</td><td>Define data provider interface</td><td><span class="status todo">TODO</span></td><td>Abstract base class for financial data</td></tr>
+          <tr><td>1.4</td><td>Implement yfinance provider</td><td><span class="status todo">TODO</span></td><td>Fetch statements, price, market cap, sector</td></tr>
+          <tr><td>1.5</td><td>Implement caching layer</td><td><span class="status todo">TODO</span></td><td>File-based cache with TTL</td></tr>
+          <tr><td>1.6</td><td>Implement rate limiter + retry logic</td><td><span class="status todo">TODO</span></td><td>Polite API usage, backoff</td></tr>
+          <tr><td>1.7</td><td>Build universe builder</td><td><span class="status todo">TODO</span></td><td>US-listed, &gt;$1B, exclude OTC/ETFs</td></tr>
+          <tr><td>1.8</td><td>CLI entrypoint with Click</td><td><span class="status todo">TODO</span></td><td>python -m src.main with options</td></tr>
+          <tr><td>1.9</td><td>Logging setup (loguru)</td><td><span class="status todo">TODO</span></td><td>File + minimal stdout</td></tr>
+          <tr><td>1.10</td><td>Run folder management</td><td><span class="status todo">TODO</span></td><td>Timestamped output dirs</td></tr>
+          <tr><td>1.11</td><td>Unit tests for config + provider</td><td><span class="status todo">TODO</span></td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Sprint 2 Detail -->
+    <div class="sprint-detail">
+      <h3>Sprint 2 — Screening Pipeline (Stages A–C) <span class="dep-tag">depends on Sprint 1</span></h3>
+      <table>
+        <thead><tr><th>ID</th><th>Task</th><th>Status</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>2.1</td><td>Stage A: Hard Filters (Graham)</td><td><span class="status todo">TODO</span></td><td>P/E, EPS, FCF, D/E, CR, dilution</td></tr>
+          <tr><td>2.2</td><td>Reject reasons tracking</td><td><span class="status todo">TODO</span></td><td>Exact values vs thresholds</td></tr>
+          <tr><td>2.3</td><td>Stage B: Quality Scoring (Buffett)</td><td><span class="status todo">TODO</span></td><td>ROIC, ROE, margins, revenue trend</td></tr>
+          <tr><td>2.4</td><td>Quality score computation (0–100)</td><td><span class="status todo">TODO</span></td><td>Weighted sub-scores</td></tr>
+          <tr><td>2.5</td><td>Stage C: Cyclicality detection</td><td><span class="status todo">TODO</span></td><td>Margin deviation, commodity flags</td></tr>
+          <tr><td>2.6</td><td>Earnings normalization (5–10y avg)</td><td><span class="status todo">TODO</span></td><td>For cyclical businesses</td></tr>
+          <tr><td>2.7</td><td>Pipeline orchestrator (A→B→C)</td><td><span class="status todo">TODO</span></td><td>Chain stages, pass data forward</td></tr>
+          <tr><td>2.8</td><td>Unit tests for each stage</td><td><span class="status todo">TODO</span></td><td></td></tr>
+          <tr><td>2.9</td><td>Integration test: small ticker set</td><td><span class="status todo">TODO</span></td><td>End-to-end A→C with real data</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Sprint 3 Detail -->
+    <div class="sprint-detail">
+      <h3>Sprint 3 — Valuation &amp; Trap Detection (Stages D–E) <span class="dep-tag">depends on Sprint 2</span></h3>
+      <table>
+        <thead><tr><th>ID</th><th>Task</th><th>Status</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>3.1</td><td>Method 1: Conservative Earnings Power</td><td><span class="status todo">TODO</span></td><td>normalized_EPS × conservative_multiple</td></tr>
+          <tr><td>3.2</td><td>Method 2: Conservative DCF</td><td><span class="status todo">TODO</span></td><td>FCF-based, low/base/high range</td></tr>
+          <tr><td>3.3</td><td>Margin of Safety calculation</td><td><span class="status todo">TODO</span></td><td>1 - (price / intrinsic_base)</td></tr>
+          <tr><td>3.4</td><td>Intrinsic value range aggregation</td><td><span class="status todo">TODO</span></td><td>Combine methods into [low, base, high]</td></tr>
+          <tr><td>3.5</td><td>Stage E: Value Trap Detection</td><td><span class="status todo">TODO</span></td><td>Revenue/margin decline, FCF divergence</td></tr>
+          <tr><td>3.6</td><td>Trap flag severity system</td><td><span class="status todo">TODO</span></td><td>LOW / MED / HIGH with evidence</td></tr>
+          <tr><td>3.7</td><td>Interest coverage + debt growth checks</td><td><span class="status todo">TODO</span></td><td></td></tr>
+          <tr><td>3.8</td><td>One-off earnings detection</td><td><span class="status todo">TODO</span></td><td>Heuristic for inflated P/E</td></tr>
+          <tr><td>3.9</td><td>Unit tests for valuation math</td><td><span class="status todo">TODO</span></td><td>DCF, EPV, MOS edge cases</td></tr>
+          <tr><td>3.10</td><td>Unit tests for trap detection</td><td><span class="status todo">TODO</span></td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Sprint 4 Detail -->
+    <div class="sprint-detail">
+      <h3>Sprint 4 — Scoring, Signals &amp; Reports (Stage F + Output) <span class="dep-tag">depends on Sprint 3</span></h3>
+      <table>
+        <thead><tr><th>ID</th><th>Task</th><th>Status</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>4.1</td><td>Stage F: Final weighted scoring</td><td><span class="status todo">TODO</span></td><td>Valuation 30%, quality 25%, etc.</td></tr>
+          <tr><td>4.2</td><td>Signal assignment logic</td><td><span class="status todo">TODO</span></td><td>STRONG_BUY / BUY / WATCH / REJECT</td></tr>
+          <tr><td>4.3</td><td>Signal drivers (top 5 why)</td><td><span class="status todo">TODO</span></td><td>Per-ticker explanation</td></tr>
+          <tr><td>4.4</td><td>Signal risks (top 5)</td><td><span class="status todo">TODO</span></td><td>Per-ticker risk summary</td></tr>
+          <tr><td>4.5</td><td>Thesis invalidation triggers</td><td><span class="status todo">TODO</span></td><td>What to monitor</td></tr>
+          <tr><td>4.6</td><td>Markdown report generator</td><td><span class="status todo">TODO</span></td><td>Full template per spec §6.1</td></tr>
+          <tr><td>4.7</td><td>JSON report generator</td><td><span class="status todo">TODO</span></td><td>All raw + computed metrics</td></tr>
+          <tr><td>4.8</td><td>CSV exports (candidates + rejected)</td><td><span class="status todo">TODO</span></td><td></td></tr>
+          <tr><td>4.9</td><td>Full pipeline integration test</td><td><span class="status todo">TODO</span></td><td>A→F end-to-end</td></tr>
+          <tr><td>4.10</td><td>Golden tests (regression)</td><td><span class="status todo">TODO</span></td><td>Fixed tickers, expected outputs</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Sprint 5 Detail -->
+    <div class="sprint-detail">
+      <h3>Sprint 5 — Static Site Generator <span class="dep-tag">depends on Sprint 4</span></h3>
+      <table>
+        <thead><tr><th>ID</th><th>Task</th><th>Status</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>5.1</td><td>Jinja2 template: index.html</td><td><span class="status todo">TODO</span></td><td>Hero, ranked table, signal cards</td></tr>
+          <tr><td>5.2</td><td>Jinja2 template: ticker page</td><td><span class="status todo">TODO</span></td><td>Metrics dashboard, valuation, risks</td></tr>
+          <tr><td>5.3</td><td>CSS design (site/style.css)</td><td><span class="status todo">TODO</span></td><td>Modern, clean, responsive</td></tr>
+          <tr><td>5.4</td><td>JS: table sorting &amp; filtering</td><td><span class="status todo">TODO</span></td><td>Vanilla JS, sector/signal/MOS filters</td></tr>
+          <tr><td>5.5</td><td>Methodology section/page</td><td><span class="status todo">TODO</span></td><td>Generated from config + spec</td></tr>
+          <tr><td>5.6</td><td>Disclaimer banner</td><td><span class="status todo">TODO</span></td><td>Prominent, always visible</td></tr>
+          <tr><td>5.7</td><td>Sparklines / mini-charts</td><td><span class="status todo">TODO</span></td><td>CSS/SVG trend indicators</td></tr>
+          <tr><td>5.8</td><td>Color-coded signals</td><td><span class="status todo">TODO</span></td><td>Green/amber/red visual system</td></tr>
+          <tr><td>5.9</td><td>Mobile responsiveness</td><td><span class="status todo">TODO</span></td><td></td></tr>
+          <tr><td>5.10</td><td>Offline verification</td><td><span class="status todo">TODO</span></td><td>No CDN dependencies</td></tr>
+          <tr><td>5.11</td><td>Site generation integration</td><td><span class="status todo">TODO</span></td><td>Pipeline final step → root index.html</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Sprint 6 Detail -->
+    <div class="sprint-detail">
+      <h3>Sprint 6 — Polish, Testing &amp; Documentation <span class="dep-tag">depends on Sprint 5</span></h3>
+      <table>
+        <thead><tr><th>ID</th><th>Task</th><th>Status</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>6.1</td><td>Error handling hardening</td><td><span class="status todo">TODO</span></td><td>Missing data, API failures, edge cases</td></tr>
+          <tr><td>6.2</td><td>Partial-run resume capability</td><td><span class="status todo">TODO</span></td><td>Don't re-scan completed tickers</td></tr>
+          <tr><td>6.3</td><td>Full test suite pass</td><td><span class="status todo">TODO</span></td><td>All unit + integration + golden tests</td></tr>
+          <tr><td>6.4</td><td>README.md</td><td><span class="status todo">TODO</span></td><td>Project overview, setup, usage</td></tr>
+          <tr><td>6.5</td><td>GitHub Pages config verification</td><td><span class="status todo">TODO</span></td><td>Root deployment, index.html served</td></tr>
+          <tr><td>6.6</td><td>First full production run</td><td><span class="status todo">TODO</span></td><td>Scan entire universe, review results</td></tr>
+          <tr><td>6.7</td><td>Review &amp; tune thresholds</td><td><span class="status todo">TODO</span></td><td>Based on first run quality</td></tr>
+          <tr><td>6.8</td><td>Performance profiling</td><td><span class="status todo">TODO</span></td><td>Optimize slow API calls, caching</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Future Backlog -->
+    <div class="backlog-section">
+      <h2>Future Backlog (v1.1+)</h2>
+      <table>
+        <thead><tr><th>ID</th><th>Task</th><th>Priority</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>F.1</td><td>Financial Modeling Prep (FMP) provider</td><td><span class="status wip">Medium</span></td><td>Better data quality than yfinance</td></tr>
+          <tr><td>F.2</td><td>Dark mode toggle</td><td><span class="status todo">Low</span></td><td>Nice-to-have</td></tr>
+          <tr><td>F.3</td><td>Dividend analysis module</td><td><span class="status wip">Medium</span></td><td>Yield, payout ratio, dividend growth</td></tr>
+          <tr><td>F.4</td><td>Insider buying/selling signals</td><td><span class="status wip">Medium</span></td><td>Additional quality indicator</td></tr>
+          <tr><td>F.5</td><td>Sector-specific threshold profiles</td><td><span class="status wip">Medium</span></td><td>Banks, REITs, energy separate rules</td></tr>
+          <tr><td>F.6</td><td>GitHub Actions: scheduled auto-scan</td><td><span class="status done">High</span></td><td>Weekly automated runs</td></tr>
+          <tr><td>F.7</td><td>Historical run comparison</td><td><span class="status wip">Medium</span></td><td>Track signals over time</td></tr>
+          <tr><td>F.8</td><td>Turnaround mode</td><td><span class="status todo">Low</span></td><td>Special situations hunting</td></tr>
+          <tr><td>F.9</td><td>Email/notification on new STRONG_BUY</td><td><span class="status wip">Medium</span></td><td>Alert system</td></tr>
+          <tr><td>F.10</td><td>Portfolio tracking overlay</td><td><span class="status todo">Low</span></td><td>Track owned positions vs signals</td></tr>
+          <tr><td>F.11</td><td>International markets</td><td><span class="status todo">Low</span></td><td>Expand universe beyond US</td></tr>
+          <tr><td>F.12</td><td>Piotroski F-Score integration</td><td><span class="status wip">Medium</span></td><td>Financial health metric</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="footer">
+      STOKS Project Dashboard &bull; Last updated: 2026-03-01 &bull; Source of truth: <code>docs/BACKLOG.md</code>
+    </div>
+  </div>
+</body>
+</html>

@@ -87,8 +87,10 @@ STOKS/
 
 ## Notes for AI Assistants (Copilot / Claude)
 
+- **ALWAYS check `.copilot/skills/` first** before starting any task. The skills files contain the exact methodology, parameters, and step-by-step procedures for scanning and analyzing stocks. Read them before writing or modifying any code.
 - **Always activate the virtual environment** before running any Python command.
 - **Never install packages directly** — update `requirements.txt` and let the user install.
 - The `env/` directory is git-ignored and should never be committed.
 - The `runs/` directory contains ephemeral run artifacts and is git-ignored.
 - See `docs/SPEC_v1.0.md` for the full system specification.
+- See `docs/BACKLOG.md` for sprint planning and task tracking.

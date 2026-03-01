@@ -1,0 +1,86 @@
+# STOKS Configuration - Value Investing Scanner
+# All thresholds are configurable. See docs/SPEC_v1.0.md for rationale.
+
+# --- Universe ---
+universe:
+  market: "US"                    # US-listed equities (NYSE/Nasdaq)
+  min_market_cap: 1_000_000_000   # $1B minimum
+  sector_mode: "simple"           # "simple" = exclude Financials+REITs; "full" = include all
+  exclude_sectors:                # Only used when sector_mode = "simple"
+    - "Financial Services"
+    - "Real Estate"
+  allow_turnarounds: false        # If true, allow negative P/E tickers into pipeline
+
+# --- Stage A: Hard Filters (Graham) ---
+hard_filters:
+  pe_max: 10                      # P/E (TTM) must be below this
+  eps_positive_min_years: 5       # Out of last 7 years
+  eps_lookback_years: 7
+  fcf_positive_min_years: 4       # Out of last 5 years
+  fcf_lookback_years: 5
+  debt_to_equity_max: 1.0
+  current_ratio_min: 1.5
+  dilution_cagr_max: 0.03        # 3% max share count growth (5y CAGR)
+
+# --- Stage B: Quality Filter (Buffett) ---
+quality:
+  roic_min: 0.12                  # 12%
+  roe_min: 0.15                   # 15%
+  gross_margin_max_stddev: 0.05   # Max 5pp standard deviation over 5y
+  quality_score_min: 60           # 0-100 scale, minimum to proceed
+
+# --- Stage C: Cyclicality ---
+cyclicality:
+  normalization_years: 5          # Years to average for normalized EPS/FCF
+  peak_margin_deviation: 0.5      # Flag if current margin > 50% above long-run mean
+  cyclical_pe_max: 7              # Tighter P/E for HIGH cyclicality
+
+# --- Stage D: Valuation ---
+valuation:
+  # Method 1: Earnings Power Value
+  conservative_multiple: 10       # Default multiple for normalized EPS
+  cyclical_multiple: 7            # Lower multiple for cyclical businesses
+
+  # Method 2: Conservative DCF
+  discount_rate: 0.11             # 11%
+  growth_rate: 0.02               # 2% conservative growth
+  growth_rate_max: 0.03           # Cap at 3%
+  terminal_growth: 0.02           # 2% terminal/perpetuity growth
+  dcf_years: 10                   # Projection period
+
+  # Margin of Safety
+  mos_buy: 0.30                   # 30% MOS for BUY_SIGNAL
+  mos_strong_buy: 0.45            # 45% MOS for STRONG_BUY_SIGNAL
+
+# --- Stage E: Value Trap Detection ---
+trap_detection:
+  revenue_decline_years: 3        # Flag if revenue declining this many consecutive years
+  interest_coverage_min: 3.0      # Minimum interest coverage ratio
+  debt_growth_threshold: 0.10     # Flag if net debt CAGR > 10%
+
+# --- Stage F: Scoring Weights ---
+scoring:
+  weights:
+    valuation: 0.30
+    earnings_quality: 0.25
+    balance_sheet: 0.20
+    stability: 0.15
+    moat_proxies: 0.10
+  signal_thresholds:
+    strong_buy_quality: 75
+    buy_quality: 65
+
+# --- Data Provider ---
+provider:
+  name: "yfinance"                # Data source (yfinance, fmp, etc.)
+  cache_ttl_hours: 24             # Cache financial data for 24 hours
+  rate_limit_per_second: 2        # Max API calls per second
+  max_retries: 3
+  retry_backoff: 2.0              # Exponential backoff multiplier
+
+# --- Output ---
+output:
+  run_dir: "runs"                 # Base directory for timestamped runs
+  exports_dir: "exports"
+  site_root: "."                  # index.html goes to repo root
+  site_assets: "site"             # CSS/JS/ticker pages

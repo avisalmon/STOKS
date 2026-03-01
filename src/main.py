@@ -36,9 +36,9 @@ from src.universe import UniverseBuilder
     help="Path to config.yaml (default: config.yaml)",
 )
 @click.option(
-    "--ticker",
-    default=None,
-    help="Analyze a single ticker instead of full universe scan.",
+    "--ticker", "-t",
+    multiple=True,
+    help="Analyze specific ticker(s). Repeat for multiple: -t AAPL -t MSFT",
 )
 @click.option(
     "--sector-mode",
@@ -60,7 +60,7 @@ from src.universe import UniverseBuilder
 )
 def main(
     config_path: str,
-    ticker: str | None,
+    ticker: tuple[str, ...],
     sector_mode: str | None,
     verbose: bool,
     dry_run: bool,
@@ -97,10 +97,10 @@ def main(
         retry_backoff=cfg.provider.retry_backoff,
     )
 
-    # Step 5: Build universe or use single ticker
+    # Step 5: Build universe or use specific tickers
     if ticker:
-        tickers = [ticker.upper()]
-        logger.info(f"Single ticker mode: {tickers[0]}")
+        tickers = [t.upper() for t in ticker]
+        logger.info(f"Ticker mode: {', '.join(tickers)}")
     else:
         universe_builder = UniverseBuilder(cfg, provider)
         tickers = universe_builder.build()
@@ -115,8 +115,6 @@ def main(
         return
 
     # Step 6: Run pipeline
-    # TODO (Sprint 2+): Implement pipeline stages A–F
-    # For now: fetch data for each ticker to validate the data layer
     from src.pipeline.orchestrator import run_pipeline
 
     results = run_pipeline(
@@ -126,9 +124,28 @@ def main(
         run_mgr=run_mgr,
     )
 
+    # Step 7: Generate reports & exports
+    from src.reports import generate_all_reports
+
+    report_files = generate_all_reports(results, run_mgr)
+
+    # Step 8: Generate static site
+    from src.site_generator import generate_site
+
+    generate_site(results, run_mgr)
+
     logger.info("=" * 60)
-    logger.info(f"Scan complete. {len(results.get('candidates', []))} candidates found.")
+    n_candidates = len(results.get("candidates", []))
+    logger.info(f"Scan complete. {n_candidates} candidates found.")
     logger.info(f"Results: {run_mgr.run_dir}")
+    if n_candidates > 0:
+        logger.info("Top candidates:")
+        for c in results["candidates"][:10]:
+            logger.info(
+                f"  {c['signal']:20s} {c['ticker']:6s} "
+                f"Score={c['final_score']:.0f}  "
+                f"MOS={c.get('margin_of_safety', 0):.1%}"
+            )
     logger.info("=" * 60)
 
 

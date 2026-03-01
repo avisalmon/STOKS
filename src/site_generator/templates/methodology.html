@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Methodology — STOKS</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="disclaimer">
+        ⚠️ DISCLAIMER: This tool is for educational and research purposes only. It does NOT constitute financial advice.
+    </div>
+
+    <header>
+        <div class="container">
+            <h1><span>STOKS</span> Value Investing Scanner</h1>
+            <nav>
+                <a href="../index.html">← Dashboard</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="section" style="max-width: 800px;">
+            <h2>Methodology — Graham-Buffett Value Investing Framework</h2>
+
+            <div class="stage-section">
+                <h3>Overview</h3>
+                <p style="color: var(--text-secondary); line-height: 1.8;">
+                    STOKS implements a systematic stock screening pipeline inspired by the investment philosophies
+                    of <strong>Benjamin Graham</strong> (father of value investing) and <strong>Warren Buffett</strong>
+                    (quality + moat emphasis). The pipeline runs six sequential stages to identify stocks that
+                    offer both quality and value.
+                </p>
+            </div>
+
+            <div class="stage-section">
+                <h3>Stage A — Hard Filters</h3>
+                <p style="color: var(--text-secondary); line-height: 1.8;">
+                    Eliminates stocks that fail fundamental Graham-style safety criteria:
+                </p>
+                <ul style="color: var(--text-secondary); margin: 12px 0 0 20px; line-height: 2;">
+                    <li><strong>P/E Ratio ≤ 10</strong> — strict Graham value threshold</li>
+                    <li><strong>Consistent Positive EPS</strong> — minimum years of positive earnings</li>
+                    <li><strong>Consistent Positive FCF</strong> — free cash flow track record</li>
+                    <li><strong>Debt/Equity ≤ 1.0</strong> — conservative leverage</li>
+                    <li><strong>Current Ratio ≥ 1.5</strong> — adequate liquidity</li>
+                    <li><strong>Share Dilution &lt; 3% CAGR</strong> — shareholder-friendly capital allocation</li>
+                </ul>
+            </div>
+
+            <div class="stage-section">
+                <h3>Stage B — Quality Score</h3>
+                <p style="color: var(--text-secondary); line-height: 1.8;">
+                    Evaluates the business quality through a weighted composite score (0-100):
+                </p>
+                <ul style="color: var(--text-secondary); margin: 12px 0 0 20px; line-height: 2;">
+                    <li><strong>ROIC (25%)</strong> — Return on invested capital, the key Buffett metric</li>
+                    <li><strong>ROE (20%)</strong> — Return on equity</li>
+                    <li><strong>Margin Stability (20%)</strong> — Consistency of gross margins over time</li>
+                    <li><strong>Operating Margin Trend (15%)</strong> — Improving or stable margins</li>
+                    <li><strong>Revenue Trend (10%)</strong> — Organic growth trajectory</li>
+                    <li><strong>FCF Margin (10%)</strong> — Cash conversion efficiency</li>
+                </ul>
+            </div>
+
+            <div class="stage-section">
+                <h3>Stage C — Cyclicality Detection</h3>
+                <p style="color: var(--text-secondary); line-height: 1.8;">
+                    Identifies cyclical businesses and normalizes their earnings to avoid buying
+                    at peak cycle. Uses operating margin deviation analysis and sector-based heuristics.
+                    Cyclical companies get their EPS normalized to mid-cycle levels for fairer valuation.
+                </p>
+            </div>
+
+            <div class="stage-section">
+                <h3>Stage D — Intrinsic Value & Margin of Safety</h3>
+                <p style="color: var(--text-secondary); line-height: 1.8;">
+                    Estimates intrinsic value using two complementary methods:
+                </p>
+                <ul style="color: var(--text-secondary); margin: 12px 0 0 20px; line-height: 2;">
+                    <li><strong>Earnings Power Value (EPV)</strong> — What the company is worth based on
+                        current normalized earnings, assuming no growth (Graham approach)</li>
+                    <li><strong>Conservative DCF</strong> — Discounted cash flow model with conservative
+                        growth assumptions (Buffett approach)</li>
+                </ul>
+                <p style="color: var(--text-secondary); line-height: 1.8; margin-top: 8px;">
+                    <strong>Margin of Safety</strong> thresholds: Strong Buy ≥ 45%, Buy ≥ 30%.
+                    Discount rate: 11% (approximating long-term equity returns).
+                </p>
+            </div>
+
+            <div class="stage-section">
+                <h3>Stage E — Value Trap Detection</h3>
+                <p style="color: var(--text-secondary); line-height: 1.8;">
+                    Checks for red flags that often indicate a stock is cheap for good reason:
+                </p>
+                <ul style="color: var(--text-secondary); margin: 12px 0 0 20px; line-height: 2;">
+                    <li>Revenue and margin declining simultaneously</li>
+                    <li>FCF diverging negatively from reported EPS</li>
+                    <li>Accelerating debt growth</li>
+                    <li>Deteriorating interest coverage</li>
+                </ul>
+            </div>
+
+            <div class="stage-section">
+                <h3>Stage F — Final Scoring & Signal</h3>
+                <p style="color: var(--text-secondary); line-height: 1.8;">
+                    Produces a weighted composite score and assigns a signal:
+                </p>
+                <ul style="color: var(--text-secondary); margin: 12px 0 0 20px; line-height: 2;">
+                    <li><span class="signal-badge signal-strong-buy">STRONG BUY</span> — High quality + large margin of safety + no traps</li>
+                    <li><span class="signal-badge signal-buy">BUY</span> — Good quality + adequate margin of safety</li>
+                    <li><span class="signal-badge signal-watch">WATCH</span> — Interesting but needs monitoring</li>
+                    <li><span class="signal-badge signal-reject">REJECT</span> — Fails one or more critical criteria</li>
+                </ul>
+            </div>
+
+            <div class="stage-section">
+                <h3>Data Sources & Limitations</h3>
+                <p style="color: var(--text-secondary); line-height: 1.8;">
+                    Currently using Yahoo Finance (via yfinance library) for financial data.
+                    The free API provides ~4 years of annual statement data, which limits lookback periods.
+                    All calculations adapt automatically to available data depth.
+                </p>
+                <p style="color: var(--text-secondary); line-height: 1.8; margin-top: 8px;">
+                    <strong>Important:</strong> This tool is a screening aid, not a recommendation engine.
+                    Always verify data independently and conduct thorough qualitative analysis before
+                    making any investment decision.
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>Generated by <strong>STOKS Value Investing Scanner</strong> — {{ generated_at }}</p>
+            <p style="margin-top: 4px;">Graham-Buffett Framework • Not Financial Advice • For Research Only</p>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STOKS — Value Investing Scanner</title>
+    <link rel="stylesheet" href="site/style.css">
+</head>
+<body>
+    <div class="disclaimer">
+        ⚠️ DISCLAIMER: This tool is for educational and research purposes only. It does NOT constitute financial advice.
+        Always conduct your own due diligence before making investment decisions.
+    </div>
+
+    <header>
+        <div class="container">
+            <h1><span>STOKS</span> Value Investing Scanner</h1>
+            <nav>
+                <a href="#candidates">Candidates</a>
+                <a href="#rejected">Rejected</a>
+                <a href="site/methodology.html">Methodology</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Stats Overview -->
+        <div class="stats-strip">
+            <div class="stat-card">
+                <div class="value">{{ total_scanned }}</div>
+                <div class="label">Stocks Scanned</div>
+            </div>
+            <div class="stat-card">
+                <div class="value" style="color: var(--green);">{{ total_candidates }}</div>
+                <div class="label">Candidates</div>
+            </div>
+            <div class="stat-card">
+                <div class="value" style="color: var(--red);">{{ total_rejected }}</div>
+                <div class="label">Rejected</div>
+            </div>
+            <div class="stat-card">
+                <div class="value" style="color: var(--text-muted);">{{ total_errors }}</div>
+                <div class="label">Errors</div>
+            </div>
+        </div>
+
+        <!-- Candidates Section -->
+        <section id="candidates" class="section">
+            <h2>📊 Screened Candidates</h2>
+
+            {% if candidates %}
+            <!-- Filters -->
+            <div class="controls">
+                <input type="text" id="search-box" class="search-box"
+                       placeholder="Search ticker or company name...">
+                <select id="sector-filter" class="filter-select">
+                    <option value="">All Sectors</option>
+                    {% for sector in candidates|map(attribute='sector')|unique|sort %}
+                    {% if sector %}
+                    <option value="{{ sector }}">{{ sector }}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+                <select id="signal-filter" class="filter-select">
+                    <option value="">All Signals</option>
+                    <option value="STRONG_BUY_SIGNAL">Strong Buy</option>
+                    <option value="BUY_SIGNAL">Buy</option>
+                    <option value="WATCH">Watch</option>
+                </select>
+            </div>
+
+            <div class="table-wrapper">
+                <table id="candidates-table">
+                    <thead>
+                        <tr>
+                            <th data-sort="rank" data-type="number">#</th>
+                            <th data-sort="signal">Signal</th>
+                            <th data-sort="ticker">Ticker</th>
+                            <th data-sort="name">Company</th>
+                            <th data-sort="sector">Sector</th>
+                            <th data-sort="score" data-type="number">Score</th>
+                            <th data-sort="mos" data-type="number">MOS</th>
+                            <th data-sort="quality" data-type="number">Quality</th>
+                            <th data-sort="pe" data-type="number">P/E</th>
+                            <th data-sort="roe" data-type="number">ROE</th>
+                            <th data-sort="roic" data-type="number">ROIC</th>
+                            <th data-sort="fcf_yield" data-type="number">FCF Yield</th>
+                            <th data-sort="de" data-type="number">D/E</th>
+                            <th data-sort="mcap" data-type="number">Mkt Cap</th>
+                            <th>Links</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in candidates %}
+                        <tr data-ticker="{{ c.ticker }}"
+                            data-name="{{ c.name }}"
+                            data-sector="{{ c.sector }}"
+                            data-signal="{{ c.signal }}">
+                            <td class="num" data-col="rank" data-value="{{ loop.index }}">{{ loop.index }}</td>
+                            <td data-col="signal" data-value="{{ c.signal }}">
+                                <span class="signal-badge {{ c.signal|signal_class }}">
+                                    {{ c.signal|signal_label }}
+                                </span>
+                            </td>
+                            <td data-col="ticker" data-value="{{ c.ticker }}">
+                                <a href="site/ticker/{{ c.ticker }}.html"><strong>{{ c.ticker }}</strong></a>
+                            </td>
+                            <td data-col="name" data-value="{{ c.name }}">{{ c.name }}</td>
+                            <td data-col="sector" data-value="{{ c.sector }}">{{ c.sector }}</td>
+                            <td class="num" data-col="score" data-value="{{ c.final_score }}">
+                                <div class="score-bar">
+                                    <div class="bar">
+                                        <div class="fill {% if c.final_score >= 70 %}mos-high{% elif c.final_score >= 50 %}mos-mid{% else %}mos-low{% endif %}"
+                                             style="width: {{ c.final_score }}%"></div>
+                                    </div>
+                                    <span class="value">{{ c.final_score|fmt_num(0) }}</span>
+                                </div>
+                            </td>
+                            <td class="num" data-col="mos" data-value="{{ c.margin_of_safety }}">
+                                {{ c.margin_of_safety|fmt_pct }}
+                            </td>
+                            <td class="num" data-col="quality" data-value="{{ c.quality_score }}">
+                                {{ c.quality_score|fmt_num(0) }}
+                            </td>
+                            <td class="num" data-col="pe" data-value="{{ c.pe_ratio or 0 }}">
+                                {{ c.pe_ratio|fmt_num(1) }}
+                            </td>
+                            <td class="num" data-col="roe" data-value="{{ c.roe or 0 }}">
+                                {{ c.roe|fmt_pct }}
+                            </td>
+                            <td class="num" data-col="roic" data-value="{{ c.roic or 0 }}">
+                                {{ c.roic|fmt_pct }}
+                            </td>
+                            <td class="num" data-col="fcf_yield" data-value="{{ c.fcf_yield or 0 }}">
+                                {{ c.fcf_yield|fmt_pct }}
+                            </td>
+                            <td class="num" data-col="de" data-value="{{ c.debt_to_equity or 0 }}">
+                                {{ c.debt_to_equity|fmt_num(2) }}
+                            </td>
+                            <td class="num" data-col="mcap" data-value="{{ c.market_cap }}">
+                                {{ c.market_cap|fmt_dollar }}
+                            </td>
+                            <td data-col="links">
+                                <a href="https://finance.yahoo.com/quote/{{ c.ticker }}" target="_blank" rel="noopener" title="Yahoo Finance">YF↗</a>
+                                <a href="https://finviz.com/quote.ashx?t={{ c.ticker }}" target="_blank" rel="noopener" title="Finviz">FV↗</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="icon">🔍</div>
+                <h3>No Candidates Found</h3>
+                <p>No stocks passed all screening stages in this run.<br>
+                This is expected with strict Graham filters — most stocks won't qualify.</p>
+            </div>
+            {% endif %}
+        </section>
+
+        <!-- Rejected Section -->
+        <section id="rejected" class="section">
+            <h2>🔴 Rejected Stocks ({{ total_rejected }})</h2>
+
+            {% if rejected %}
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ticker</th>
+                            <th>Company</th>
+                            <th>Sector</th>
+                            <th>Rejection Reasons</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in rejected %}
+                        <tr>
+                            <td><strong>{{ r.ticker }}</strong></td>
+                            <td>{{ r.name }}</td>
+                            <td>{{ r.sector }}</td>
+                            <td style="white-space: normal; max-width: 500px;">
+                                {% for reason in r.reasons %}
+                                <span style="display: inline-block; background: var(--bg-tertiary); padding: 2px 8px; border-radius: 4px; margin: 2px; font-size: 0.8rem;">
+                                    {{ reason }}
+                                </span>
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p style="color: var(--text-secondary); padding: 20px 0;">No rejected stocks to display.</p>
+            {% endif %}
+        </section>
+
+        {% if errors %}
+        <section id="errors" class="section">
+            <h2>⚠️ Errors ({{ total_errors }})</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>Ticker</th><th>Error</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for e in errors %}
+                        <tr>
+                            <td><strong>{{ e.ticker }}</strong></td>
+                            <td>{{ e.reason }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {% endif %}
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>Generated by <strong>STOKS Value Investing Scanner</strong> — {{ generated_at }}</p>
+            <p style="margin-top: 4px;">Graham-Buffett Framework • Not Financial Advice • For Research Only</p>
+        </div>
+    </footer>
+
+    <script src="site/app.js"></script>
+</body>
+</html>

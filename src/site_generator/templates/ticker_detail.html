@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ ticker }} — {{ name }} | STOKS</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <div class="disclaimer">
+        ⚠️ DISCLAIMER: This tool is for educational and research purposes only. It does NOT constitute financial advice.
+    </div>
+
+    <header>
+        <div class="container">
+            <h1><span>STOKS</span> Value Investing Scanner</h1>
+            <nav>
+                <a href="../../index.html">← Dashboard</a>
+                <a href="../methodology.html">Methodology</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Detail Header -->
+        <div class="detail-header">
+            <h1>
+                <span class="signal-badge {{ signal|signal_class }}">{{ signal|signal_label }}</span>
+                {{ name }} ({{ ticker }})
+            </h1>
+            <div class="subtitle">
+                {{ sector }} · {{ industry }} · {{ exchange }} · {{ country }}
+            </div>
+        </div>
+
+        <!-- Research Links -->
+        <div class="research-links">
+            <span class="research-label">Research:</span>
+            <a href="https://finance.yahoo.com/quote/{{ ticker }}" target="_blank" rel="noopener">Yahoo Finance ↗</a>
+            <a href="https://finviz.com/quote.ashx?t={{ ticker }}" target="_blank" rel="noopener">Finviz ↗</a>
+            <a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK={{ ticker }}&type=10-K&dateb=&owner=include&count=10" target="_blank" rel="noopener">SEC 10-K ↗</a>
+            <a href="https://www.macrotrends.net/stocks/charts/{{ ticker }}/{{ name|lower|replace(' ', '-') }}/revenue" target="_blank" rel="noopener">Macrotrends ↗</a>
+            <a href="https://simplywall.st/stocks/us/{{ ticker|lower }}" target="_blank" rel="noopener">Simply Wall St ↗</a>
+        </div>
+
+        <!-- Key Numbers -->
+        <div class="stats-strip">
+            <div class="stat-card">
+                <div class="value">{{ final_score|fmt_num(0) }}</div>
+                <div class="label">Final Score</div>
+            </div>
+            <div class="stat-card">
+                <div class="value" style="color: {% if margin_of_safety >= 0.45 %}var(--green){% elif margin_of_safety >= 0.30 %}var(--yellow){% else %}var(--red){% endif %};">
+                    {{ margin_of_safety|fmt_pct }}
+                </div>
+                <div class="label">Margin of Safety</div>
+            </div>
+            <div class="stat-card">
+                <div class="value">{{ quality_score|fmt_num(0) }}</div>
+                <div class="label">Quality Score</div>
+            </div>
+            <div class="stat-card">
+                <div class="value">{{ price|fmt_dollar }}</div>
+                <div class="label">Current Price</div>
+            </div>
+            <div class="stat-card">
+                <div class="value">{{ market_cap|fmt_dollar }}</div>
+                <div class="label">Market Cap</div>
+            </div>
+        </div>
+
+        <!-- Key Metrics Grid -->
+        <section class="section">
+            <h2>Key Metrics</h2>
+            <div class="metrics-grid">
+                {% if metrics %}
+                {% for key, val in metrics.items() %}
+                {% if val is not none %}
+                <div class="metric-card">
+                    <div class="metric-label">{{ key|replace('_', ' ')|title }}</div>
+                    <div class="metric-value">
+                        {% if 'margin' in key or 'yield' in key or key in ['roe', 'roic'] %}
+                            {{ val|fmt_pct }}
+                        {% elif 'ratio' in key or key in ['beta'] %}
+                            {{ val|fmt_num(2) }}
+                        {% else %}
+                            {{ val|fmt_num(2) }}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Valuation -->
+        <section class="section">
+            <h2>Intrinsic Value Estimates</h2>
+            {% if intrinsic_range %}
+            <div class="metrics-grid">
+                {% for method, val in intrinsic_range.items() %}
+                <div class="metric-card">
+                    <div class="metric-label">{{ method|replace('_', ' ')|title }}</div>
+                    <div class="metric-value" style="color: var(--green);">{{ val|fmt_dollar }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p style="color: var(--text-secondary);">No intrinsic value estimates available.</p>
+            {% endif %}
+        </section>
+
+        <!-- Value Trap Detection -->
+        {% if trap_flags %}
+        <section class="section">
+            <h2>⚠️ Value Trap Flags</h2>
+            <div class="stage-section">
+                <ul class="flag-list">
+                    {% for flag in trap_flags %}
+                    <li>🚩 {{ flag }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- Stage Details -->
+        <section class="section">
+            <h2>Pipeline Stage Details</h2>
+
+            <!-- Stage A -->
+            <div class="stage-section">
+                <h3>Stage A — Hard Filters {% if stage_a.get('passed', False) %}✅{% else %}❌{% endif %}</h3>
+                {% if stage_a.get('metrics') %}
+                <div class="metrics-grid">
+                    {% for key, val in stage_a.metrics.items() %}
+                    <div class="metric-card">
+                        <div class="metric-label">{{ key|replace('_', ' ')|title }}</div>
+                        <div class="metric-value">
+                            {% if val is number %}{{ val|fmt_num(2) }}{% else %}{{ val }}{% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Stage B -->
+            <div class="stage-section">
+                <h3>Stage B — Quality Score: {{ stage_b.get('quality_score', 0)|fmt_num(0) }}/100</h3>
+                {% if stage_b.get('components') %}
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr><th>Component</th><th>Score</th><th>Weight</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for comp_name, comp_data in stage_b.components.items() %}
+                            <tr>
+                                <td>{{ comp_name|replace('_', ' ')|title }}</td>
+                                <td class="num">
+                                    {% if comp_data is mapping %}
+                                        {{ comp_data.get('score', 0)|fmt_num(1) }}
+                                    {% else %}
+                                        {{ comp_data|fmt_num(1) }}
+                                    {% endif %}
+                                </td>
+                                <td class="num">
+                                    {% if comp_data is mapping %}
+                                        {{ comp_data.get('weight', 0)|fmt_pct(0) }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Stage C -->
+            <div class="stage-section">
+                <h3>Stage C — Cyclicality: {{ cyclicality }}</h3>
+                <div class="metrics-grid">
+                    {% if stage_c.get('normalized_eps') %}
+                    <div class="metric-card">
+                        <div class="metric-label">Normalized EPS</div>
+                        <div class="metric-value">${{ stage_c.normalized_eps|fmt_num(2) }}</div>
+                    </div>
+                    {% endif %}
+                    {% if stage_c.get('margin_deviation') %}
+                    <div class="metric-card">
+                        <div class="metric-label">Margin Deviation</div>
+                        <div class="metric-value">{{ stage_c.margin_deviation|fmt_pct }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Stage F -->
+            <div class="stage-section">
+                <h3>Stage F — Final Score Breakdown</h3>
+                {% if stage_f.get('score_breakdown') %}
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr><th>Component</th><th>Weighted Score</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for comp, val in stage_f.score_breakdown.items() %}
+                            <tr>
+                                <td>{{ comp|replace('_', ' ')|title }}</td>
+                                <td class="num">{{ val|fmt_num(1) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+
+                {% if stage_f.get('drivers') %}
+                <h4 style="margin-top: 16px;">Top Drivers</h4>
+                <ol>
+                    {% for d in stage_f.drivers[:5] %}
+                    <li>{{ d }}</li>
+                    {% endfor %}
+                </ol>
+                {% endif %}
+
+                {% if stage_f.get('risks') %}
+                <h4 style="margin-top: 12px;">Top Risks</h4>
+                <ol>
+                    {% for r in stage_f.risks[:5] %}
+                    <li>{{ r }}</li>
+                    {% endfor %}
+                </ol>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Financial History -->
+        {% if income_history %}
+        <section class="section">
+            <h2>Financial History</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Year</th>
+                            <th>Revenue</th>
+                            <th>Gross Profit</th>
+                            <th>Operating Income</th>
+                            <th>Net Income</th>
+                            <th>EPS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in income_history %}
+                        <tr>
+                            <td>{{ row.year }}</td>
+                            <td class="num">{{ row.get('revenue')|fmt_dollar }}</td>
+                            <td class="num">{{ row.get('gross_profit')|fmt_dollar }}</td>
+                            <td class="num">{{ row.get('operating_income')|fmt_dollar }}</td>
+                            <td class="num">{{ row.get('net_income')|fmt_dollar }}</td>
+                            <td class="num">${{ row.get('eps')|fmt_num(2) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {% endif %}
+
+        {% if cashflow_history %}
+        <section class="section">
+            <h2>Cash Flow History</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Year</th>
+                            <th>Operating CF</th>
+                            <th>CapEx</th>
+                            <th>Free Cash Flow</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in cashflow_history %}
+                        <tr>
+                            <td>{{ row.year }}</td>
+                            <td class="num">{{ row.get('operating_cashflow')|fmt_dollar }}</td>
+                            <td class="num">{{ row.get('capex')|fmt_dollar }}</td>
+                            <td class="num">{{ row.get('free_cash_flow')|fmt_dollar }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {% endif %}
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>Generated by <strong>STOKS Value Investing Scanner</strong> — {{ generated_at }}</p>
+            <p style="margin-top: 4px;">Graham-Buffett Framework • Not Financial Advice • For Research Only</p>
+        </div>
+    </footer>
+</body>
+</html>

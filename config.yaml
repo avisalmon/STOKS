@@ -13,7 +13,7 @@ universe:
 
 # --- Stage A: Hard Filters (Graham) ---
 hard_filters:
-  pe_max: 10                      # P/E (TTM) must be below this
+  pe_max: 15                      # P/E (TTM) — Graham's "Intelligent Investor" defensive criterion
   eps_positive_min_years: 5       # Out of last 7 years
   eps_lookback_years: 7
   fcf_positive_min_years: 4       # Out of last 5 years

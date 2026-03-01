@@ -405,7 +405,8 @@ class YFinanceProvider(DataProvider):
             import requests
 
             url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
-            resp = requests.get(url, timeout=30)
+            headers = {"User-Agent": "STOKS-ValueScanner/1.0 (educational-project)"}
+            resp = requests.get(url, headers=headers, timeout=30)
             resp.raise_for_status()
 
             tables = pd.read_html(io.StringIO(resp.text))
@@ -430,7 +431,8 @@ class YFinanceProvider(DataProvider):
             import requests
 
             url = "https://en.wikipedia.org/wiki/List_of_S%26P_400_companies"
-            resp = requests.get(url, timeout=30)
+            headers = {"User-Agent": "STOKS-ValueScanner/1.0 (educational-project)"}
+            resp = requests.get(url, headers=headers, timeout=30)
             resp.raise_for_status()
 
             tables = pd.read_html(io.StringIO(resp.text))

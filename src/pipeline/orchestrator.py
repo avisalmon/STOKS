@@ -198,12 +198,21 @@ def _run_stage_a(data: TickerData, config: AppConfig) -> dict[str, Any]:
         eps_series = income["eps"].dropna()
         lookback = eps_series.tail(hf.eps_lookback_years)
         positive_years = int((lookback > 0).sum())
+        available_years = len(lookback)
         metrics["eps_positive_years"] = positive_years
-        metrics["eps_lookback"] = len(lookback)
-        if positive_years < hf.eps_positive_min_years:
+        metrics["eps_lookback"] = available_years
+
+        # Adaptive threshold: if data has fewer years than config requires,
+        # scale the requirement proportionally (e.g. need 5/7 → need 3/4)
+        required = hf.eps_positive_min_years
+        if available_years < hf.eps_lookback_years:
+            ratio = hf.eps_positive_min_years / hf.eps_lookback_years
+            required = max(1, int(round(ratio * available_years)))
+
+        if positive_years < required:
             reasons.append(
-                f"EPS positive {positive_years}/{len(lookback)} years "
-                f"(need {hf.eps_positive_min_years})"
+                f"EPS positive {positive_years}/{available_years} years "
+                f"(need {required})"
             )
     else:
         reasons.append("MISSING_DATA:eps")
@@ -214,12 +223,20 @@ def _run_stage_a(data: TickerData, config: AppConfig) -> dict[str, Any]:
         fcf_series = cashflow["free_cash_flow"].dropna()
         lookback_fcf = fcf_series.tail(hf.fcf_lookback_years)
         fcf_positive = int((lookback_fcf > 0).sum())
+        fcf_available = len(lookback_fcf)
         metrics["fcf_positive_years"] = fcf_positive
-        metrics["fcf_lookback"] = len(lookback_fcf)
-        if fcf_positive < hf.fcf_positive_min_years:
+        metrics["fcf_lookback"] = fcf_available
+
+        # Adaptive threshold for limited data
+        fcf_required = hf.fcf_positive_min_years
+        if fcf_available < hf.fcf_lookback_years:
+            ratio = hf.fcf_positive_min_years / hf.fcf_lookback_years
+            fcf_required = max(1, int(round(ratio * fcf_available)))
+
+        if fcf_positive < fcf_required:
             reasons.append(
-                f"FCF positive {fcf_positive}/{len(lookback_fcf)} years "
-                f"(need {hf.fcf_positive_min_years})"
+                f"FCF positive {fcf_positive}/{fcf_available} years "
+                f"(need {fcf_required})"
             )
     else:
         reasons.append("MISSING_DATA:free_cash_flow")
@@ -790,65 +807,257 @@ def _run_stage_f(
         signal = "REJECT"
         signal_reasons = stage_a.get("reasons", ["Failed hard filters"])
 
-    # Top drivers and risks
-    drivers = _get_top_drivers(data, stage_b, stage_d, mos)
+    # Top drivers, risks, and invalidators
+    drivers = _get_top_drivers(data, stage_a, stage_b, stage_c, stage_d, mos)
     risks = _get_top_risks(data, stage_e, stage_c, stage_b)
+    invalidators = _get_thesis_invalidators(data, stage_d, stage_b, mos)
 
     return {
         "signal": signal,
         "signal_reasons": signal_reasons,
         "final_score": round(final_score, 1),
         "sub_scores": sub_scores,
+        "score_breakdown": {
+            "valuation": round(sub_scores.get("valuation", 0) * weights.valuation, 1),
+            "earnings_quality": round(sub_scores.get("earnings_quality", 0) * weights.earnings_quality, 1),
+            "balance_sheet": round(sub_scores.get("balance_sheet", 0) * weights.balance_sheet, 1),
+            "stability": round(sub_scores.get("stability", 0) * weights.stability, 1),
+            "moat_proxies": round(sub_scores.get("moat_proxies", 0) * weights.moat_proxies, 1),
+        },
         "drivers": drivers[:5],
         "risks": risks[:5],
+        "invalidators": invalidators[:5],
     }
 
 
 def _get_top_drivers(
-    data: TickerData, stage_b: dict, stage_d: dict, mos: float
+    data: TickerData, stage_a: dict, stage_b: dict, stage_c: dict,
+    stage_d: dict, mos: float,
 ) -> list[str]:
-    """Extract top 5 positive drivers for the signal."""
+    """Extract top 5 positive drivers explaining WHY this is a value stock."""
     drivers: list[str] = []
-
-    if mos > 0:
-        drivers.append(f"Margin of safety: {mos:.1%}")
-
-    quality = stage_b.get("quality_score", 0)
-    if quality >= 70:
-        drivers.append(f"Strong quality score: {quality:.0f}/100")
-
-    roic = stage_b.get("roic_computed")
-    if roic and roic > 0.12:
-        drivers.append(f"ROIC: {roic:.1%}")
-
-    pe = data.metrics.pe_ratio
-    if pe and 0 < pe < 10:
-        drivers.append(f"Low P/E: {pe:.1f}")
-
-    intrinsic = stage_d.get("intrinsic_range", {}).get("base", 0)
     price = data.price.current_price
-    if intrinsic > price > 0:
-        drivers.append(f"Price ${price:.2f} vs intrinsic ${intrinsic:.2f}")
+    name = data.info.name or data.info.ticker
 
-    return drivers
+    # 1. Margin of Safety / Valuation
+    intrinsic = stage_d.get("intrinsic_range", {})
+    base_val = intrinsic.get("base", 0)
+    if mos >= 0.45:
+        drivers.append(
+            f"Deep discount: {name} trades at ${price:.2f}, estimated intrinsic "
+            f"value is ${base_val:.2f} — a {mos:.0%} margin of safety. "
+            f"Graham requires ≥30%; this exceeds even the 45% strong-buy threshold."
+        )
+    elif mos >= 0.30:
+        drivers.append(
+            f"Undervalued: price ${price:.2f} vs estimated intrinsic value "
+            f"${base_val:.2f} gives a {mos:.0%} margin of safety — meeting "
+            f"Graham's 30% minimum safety requirement."
+        )
+    elif mos > 0:
+        drivers.append(
+            f"Modest discount: {mos:.0%} margin of safety "
+            f"(price ${price:.2f} vs intrinsic ${base_val:.2f})."
+        )
+
+    # 2. Quality score
+    quality = stage_b.get("quality_score", 0)
+    if quality >= 80:
+        drivers.append(
+            f"Exceptional business quality (score {quality:.0f}/100): consistent "
+            f"profitability, strong returns on capital, and stable margins — "
+            f"hallmarks of a Buffett-style competitive moat."
+        )
+    elif quality >= 70:
+        drivers.append(
+            f"High quality business (score {quality:.0f}/100): above-average "
+            f"returns on capital and reliable earnings generation."
+        )
+    elif quality >= 60:
+        drivers.append(
+            f"Adequate quality (score {quality:.0f}/100): meets minimum "
+            f"quality thresholds for the Graham-Buffett framework."
+        )
+
+    # 3. Low P/E (classic Graham)
+    pe = data.metrics.pe_ratio
+    if pe and 0 < pe <= 10:
+        drivers.append(
+            f"Low P/E of {pe:.1f}x — classic Graham deep-value territory. "
+            f"The market is pricing in pessimism, yet the business continues "
+            f"to generate positive earnings."
+        )
+    elif pe and 0 < pe <= 15:
+        drivers.append(
+            f"Reasonable P/E of {pe:.1f}x — below long-run market average "
+            f"(~15-17x), suggesting the stock is not overpriced."
+        )
+
+    # 4. ROIC (Buffett's key metric)
+    roic = stage_b.get("roic_computed")
+    if roic and roic > 0.15:
+        drivers.append(
+            f"High ROIC of {roic:.1%} — the business earns well above its "
+            f"cost of capital, indicating a strong competitive advantage "
+            f"and efficient capital allocation (Buffett seeks ROIC > 12%)."
+        )
+    elif roic and roic > 0.12:
+        drivers.append(
+            f"Solid ROIC of {roic:.1%} — above the 12% threshold, indicating "
+            f"the business creates genuine economic value for shareholders."
+        )
+
+    # 5. Conservative balance sheet
+    de = stage_a.get("metrics", {}).get("debt_to_equity")
+    cr = stage_a.get("metrics", {}).get("current_ratio")
+    if de is not None and de < 0.5 and cr is not None and cr > 2.0:
+        drivers.append(
+            f"Fortress balance sheet: D/E of {de:.2f}x (conservative) "
+            f"and current ratio of {cr:.2f}x — ample liquidity and low "
+            f"financial risk. Graham emphasis on capital preservation."
+        )
+    elif de is not None and de < 1.0:
+        drivers.append(
+            f"Conservative leverage: D/E ratio of {de:.2f}x is well within "
+            f"Graham's maximum of 1.0x, reducing insolvency risk."
+        )
+
+    # 6. FCF generation
+    sub_scores = stage_b.get("sub_scores", {})
+    fcf_score = sub_scores.get("fcf_margin", 0)
+    if fcf_score >= 70:
+        drivers.append(
+            f"Strong free cash flow generation — the company converts "
+            f"earnings into real cash effectively, supporting dividends, "
+            f"buybacks, and debt reduction."
+        )
+
+    # 7. Stable/non-cyclical
+    cyclicality = stage_c.get("cyclicality_flag", "LOW")
+    if cyclicality == "LOW":
+        drivers.append(
+            f"Low cyclicality: earnings are relatively stable and predictable, "
+            f"making intrinsic value estimates more reliable."
+        )
+
+    return drivers[:5]
 
 
 def _get_top_risks(
     data: TickerData, stage_e: dict, stage_c: dict, stage_b: dict
 ) -> list[str]:
-    """Extract top 5 risks."""
+    """Extract top 5 risks with detailed context."""
     risks: list[str] = []
 
+    # Value trap flags (most critical)
     for flag in stage_e.get("trap_flags", []):
-        risks.append(f"[{flag['severity']}] {flag['flag']}: {flag['evidence']}")
+        severity = flag["severity"]
+        evidence = flag["evidence"]
+        flag_name = flag["flag"]
+        if flag_name == "REVENUE_AND_MARGIN_DECLINE":
+            risks.append(
+                f"⚠️ [{severity}] Secular decline: {evidence}. This is the #1 "
+                f"value trap pattern — a stock looks cheap because the business "
+                f"is structurally deteriorating."
+            )
+        elif flag_name == "FCF_EPS_DIVERGENCE":
+            risks.append(
+                f"⚠️ [{severity}] Earnings quality concern: {evidence}. "
+                f"When FCF diverges from EPS, reported earnings may be "
+                f"inflated by accounting choices."
+            )
+        elif flag_name == "DEBT_OUTPACING_INCOME":
+            risks.append(
+                f"⚠️ [{severity}] Leverage risk: {evidence}. Growing debt "
+                f"with stagnant income can lead to financial distress."
+            )
+        elif flag_name == "LOW_INTEREST_COVERAGE":
+            risks.append(
+                f"⚠️ [{severity}] Debt service risk: {evidence}. If rates "
+                f"rise or earnings dip, the company may struggle to cover "
+                f"interest payments."
+            )
+        else:
+            risks.append(f"⚠️ [{severity}] {flag_name}: {evidence}")
 
+    # Cyclicality risk
     if stage_c.get("cyclicality_flag") == "HIGH":
-        risks.append("HIGH cyclicality — earnings may be at peak")
+        risks.append(
+            f"Cyclical business at potentially peak earnings — if the cycle "
+            f"turns, earnings could drop significantly and the stock may "
+            f"become much less cheap than it appears today."
+        )
+    elif stage_c.get("cyclicality_flag") == "MED":
+        evidence = stage_c.get("evidence", [])
+        ev_str = "; ".join(evidence) if evidence else "moderate margin volatility"
+        risks.append(f"Moderate cyclicality ({ev_str}) — earnings may fluctuate.")
 
+    # Quality warnings
     for w in stage_b.get("warnings", []):
-        risks.append(w)
+        risks.append(f"Quality concern: {w}")
+
+    # General market risk
+    beta = data.metrics.beta
+    if beta and beta > 1.5:
+        risks.append(
+            f"High market sensitivity (beta {beta:.2f}): the stock tends to "
+            f"amplify market swings, creating larger drawdown risk."
+        )
 
     if not risks:
-        risks.append("No significant risks identified")
+        risks.append("No significant risks identified in this analysis.")
 
     return risks[:5]
+
+
+def _get_thesis_invalidators(
+    data: TickerData, stage_d: dict, stage_b: dict, mos: float
+) -> list[str]:
+    """Generate clear triggers that would invalidate the investment thesis."""
+    invalidators: list[str] = []
+    price = data.price.current_price
+    intrinsic = stage_d.get("intrinsic_range", {})
+    base_val = intrinsic.get("base", 0)
+
+    # Earnings deterioration
+    income = data.financials.income
+    if "eps" in income.columns:
+        latest_eps = income["eps"].dropna()
+        if len(latest_eps) > 0:
+            eps_val = latest_eps.iloc[-1]
+            if eps_val > 0:
+                invalidators.append(
+                    f"EPS drops below ${eps_val * 0.7:.2f} (-30%): would signal "
+                    f"fundamental deterioration and destroy the valuation thesis."
+                )
+
+    # Margin collapse
+    if data.metrics.operating_margin and data.metrics.operating_margin > 0:
+        half_margin = data.metrics.operating_margin * 0.5
+        invalidators.append(
+            f"Operating margin falls below {half_margin:.1%}: would indicate "
+            f"loss of pricing power or competitive advantage."
+        )
+
+    # Debt explosion
+    de = data.metrics.debt_to_equity
+    if de is not None:
+        de_ratio = de / 100 if de > 10 else de
+        invalidators.append(
+            f"D/E ratio rises above {max(de_ratio * 2, 1.5):.1f}x: would "
+            f"signal aggressive leverage inconsistent with conservative investment."
+        )
+
+    # FCF turning negative
+    invalidators.append(
+        "Free cash flow turns negative for 2+ consecutive years: "
+        "would undermine ability to service debt, pay dividends, or buy back shares."
+    )
+
+    # Management actions
+    invalidators.append(
+        "Major acquisition at premium prices or significant share dilution: "
+        "would signal capital allocation discipline has broken down."
+    )
+
+    return invalidators[:5]

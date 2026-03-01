@@ -1,0 +1,65 @@
+---
+name: Scan and Screen Stocks
+description: >
+  Run the full value investing stock screener pipeline following Graham-Buffett
+  principles. Scans US equities, applies hard filters, quality scoring, cyclicality
+  detection, intrinsic valuation, value trap detection, and produces ranked results
+  with buy/watch/reject signals.
+steps:
+  - name: Activate environment
+    command: "& env\\Scripts\\Activate.ps1"
+    note: Always activate the virtual environment before any Python work.
+
+  - name: Run full scan
+    command: "python -m src.main --config config.yaml"
+    description: >
+      Executes the complete screening pipeline:
+      1. Loads configuration (thresholds, universe, DCF assumptions)
+      2. Builds stock universe (US-listed, Market Cap > $1B)
+      3. Stage A — Hard Graham Filters: P/E < 10, positive EPS history,
+         positive FCF, Debt/Equity < 1, Current Ratio > 1.5, no dilution
+      4. Stage B — Buffett Quality Filter: ROIC > 12%, ROE > 15%,
+         margin stability, revenue trend, FCF margin
+      5. Stage C — Cyclicality Detection: normalizes earnings for cyclical
+         businesses, tightens thresholds if needed
+      6. Stage D — Intrinsic Value & Margin of Safety: Conservative Earnings
+         Power method + Conservative DCF, requires MOS >= 30%
+      7. Stage E — Value Trap Detection: revenue/margin decline, FCF vs EPS
+         divergence, debt growth, interest coverage
+      8. Stage F — Final Scoring: weighted composite (valuation 30%,
+         earnings quality 25%, balance sheet 20%, stability 15%, moat 10%)
+      9. Signal Assignment: STRONG_BUY / BUY / WATCH / REJECT
+      10. Report Generation: Markdown + JSON per ticker
+      11. Export: candidates.csv, rejected.csv
+      12. Static Site: generates index.html + site/ticker/*.html
+
+  - name: Review results
+    description: >
+      Open index.html in browser to see ranked candidates.
+      Check exports/candidates.csv for the full scored list.
+      Check exports/rejected.csv for tickers that failed filters with reasons.
+      Individual reports are in runs/<timestamp>/reports/<TICKER>/report.md.
+
+screening_parameters:
+  hard_filters:
+    market_cap_min: "$1B"
+    pe_ratio_max: 10
+    eps_positive_years: "5 of 7"
+    fcf_positive_years: "4 of 5"
+    debt_to_equity_max: 1.0
+    current_ratio_min: 1.5
+    dilution_cagr_max: "3%"
+  quality_filters:
+    roic_min: "12%"
+    roe_min: "15%"
+    quality_score_min: 60
+  valuation:
+    discount_rate: "11%"
+    growth_rate: "2% (cap 3%)"
+    mos_buy: "30%"
+    mos_strong_buy: "45%"
+  signals:
+    - STRONG_BUY_SIGNAL
+    - BUY_SIGNAL
+    - WATCH
+    - REJECT

@@ -1,0 +1,120 @@
+---
+name: Analyze Individual Stock
+description: >
+  Perform a deep-dive value analysis on a single stock ticker following the
+  Graham-Buffett framework defined in docs/SPEC_v1.0.md. Produces a detailed
+  report with signal recommendation.
+steps:
+  - name: Activate environment
+    command: "& env\\Scripts\\Activate.ps1"
+
+  - name: Analyze single ticker
+    command: "python -m src.main --ticker <TICKER> --config config.yaml"
+    description: >
+      Runs the full pipeline on a single ticker:
+
+      1. FETCH DATA
+         - Pull 10 years of financial statements (income, balance sheet, cash flow)
+         - Current price, shares outstanding, market cap
+         - Sector/industry classification
+
+      2. STAGE A — HARD FILTERS (Graham)
+         Check pass/fail for each:
+         - Market Cap > $1B
+         - P/E (TTM) < 10
+         - EPS positive ≥ 5 of last 7 years
+         - FCF positive ≥ 4 of last 5 years
+         - Debt/Equity < 1.0
+         - Current Ratio > 1.5
+         - Share dilution CAGR ≤ 3%
+         Record exact values vs thresholds. If any fail → REJECT with reasons.
+
+      3. STAGE B — QUALITY SCORING (Buffett)
+         Score 0–100 based on:
+         - ROIC (target > 12%) — compute from NOPAT / Invested Capital
+         - ROE (target > 15%) — flag if leverage-driven
+         - Gross margin stability (low stddev over 5y)
+         - Operating margin trend (not declining)
+         - Revenue trend (not persistently declining)
+         - FCF margin (positive, not collapsing)
+         Minimum quality_score = 60 to proceed.
+
+      4. STAGE C — CYCLICALITY CHECK
+         - Compare current margins to 5-10y average
+         - Flag commodity-linked revenue
+         - Assign cyclicality_flag: LOW / MED / HIGH
+         - If HIGH: tighten P/E requirement to < 7
+
+      5. STAGE D — INTRINSIC VALUE
+         Method 1: Conservative Earnings Power
+           intrinsic = avg_EPS_5y × conservative_multiple (10, or 7 if cyclical)
+         Method 2: Conservative DCF
+           - Normalized FCF, growth 0-3%, discount 10-12%
+           - Produce range: [low, base, high]
+         Margin of Safety = 1 - (price / intrinsic_base)
+         Require MOS ≥ 30% for BUY, ≥ 45% for STRONG_BUY.
+
+      6. STAGE E — VALUE TRAP DETECTION
+         Check for red flags:
+         - Revenue + margins declining 3 consecutive years
+         - FCF negative while EPS positive (accrual red flag)
+         - Net debt growing faster than operating income
+         - Interest coverage deteriorating
+         - One-off earnings inflating current P/E
+         Each flag has severity: LOW / MED / HIGH.
+
+      7. STAGE F — FINAL SCORE & SIGNAL
+         Weighted score:
+           Valuation (30%) + Earnings Quality (25%) + Balance Sheet (20%)
+           + Stability (15%) + Moat Proxies (10%)
+         Assign signal:
+           STRONG_BUY: quality ≥ 75, MOS ≥ 45%, no HIGH traps
+           BUY: quality ≥ 65, MOS ≥ 30%, no HIGH traps
+           WATCH: passed Stage A but borderline quality/MOS
+           REJECT: failed Stage A or HIGH severity traps
+
+      8. GENERATE REPORT
+         - Markdown report with all sections (see spec §6.1)
+         - JSON report with all raw + computed metrics
+         - Include top 5 signal drivers and top 5 risks
+         - Include thesis invalidation triggers
+
+key_metrics:
+  valuation:
+    - "P/E (TTM and Forward)"
+    - "P/B (Price to Book)"
+    - "EV/EBITDA"
+    - "FCF Yield"
+  profitability:
+    - "ROIC (Return on Invested Capital)"
+    - "ROE (Return on Equity)"
+    - "Gross Margin"
+    - "Operating Margin"
+    - "Net Margin"
+    - "FCF Margin"
+  balance_sheet:
+    - "Debt/Equity"
+    - "Current Ratio"
+    - "Interest Coverage"
+    - "Net Debt / EBITDA"
+  growth:
+    - "Revenue CAGR (5y)"
+    - "EPS CAGR (5y)"
+    - "FCF CAGR (5y)"
+  stability:
+    - "Margin stddev (5y)"
+    - "Share dilution CAGR"
+    - "Earnings consistency (positive years / total)"
+
+philosophy:
+  graham_principles:
+    - "Margin of Safety: buy significantly below intrinsic value"
+    - "Earnings stability: consistent positive earnings over years"
+    - "Financial strength: low debt, adequate current ratio"
+    - "Book value anchor: P/B as a sanity check"
+  buffett_additions:
+    - "Durable competitive advantage (moat)"
+    - "High ROIC sustained over time"
+    - "Owner earnings (FCF) matter more than accounting earnings"
+    - "Quality business at fair price > mediocre business at cheap price"
+    - "Avoid what you don't understand"

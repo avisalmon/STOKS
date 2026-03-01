@@ -24,3 +24,9 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Run artifacts (ephemeral, regenerated each run)
+runs/
+
+# Data cache
+.cache/

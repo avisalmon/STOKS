@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HOG — Harley-Davidson, Inc. | STOKS</title>
     <link rel="stylesheet" href="../style.css">
+    <script src="../app.js" defer></script>
 </head>
 <body>
     <div class="disclaimer">
@@ -47,25 +48,35 @@
         <div class="stats-strip">
             <div class="stat-card">
                 <div class="value">72</div>
-                <div class="label">Final Score</div>
+                <div class="label">Final Score
+                    <span class="help-icon" data-gloss-title="Final Score" data-gloss-expl="A composite score (0-100) combining quality, valuation, financial health, and safety metrics from all six pipeline stages." data-gloss-graham="The higher the score, the more closely the stock matches the Graham-Buffett criteria. Scores above 70 indicate strong candidates; above 80 is exceptional.">?</span>
+                </div>
             </div>
             <div class="stat-card">
                 <div class="value" style="color: var(--green);">
                     66.5%
                 </div>
-                <div class="label">Margin of Safety</div>
+                <div class="label">Margin of Safety
+                    <span class="help-icon" data-gloss-title="Margin of Safety" data-gloss-expl="How far below intrinsic value the stock trades. A 40% margin of safety means you&#39;re buying at a 40% discount to its estimated true worth." data-gloss-graham="This is Graham&#39;s most important concept. He insisted on at least a 30% margin of safety — buying well below value protects you from errors in your analysis and market downturns.">?</span>
+                </div>
             </div>
             <div class="stat-card">
                 <div class="value">45</div>
-                <div class="label">Quality Score</div>
+                <div class="label">Quality Score
+                    <span class="help-icon" data-gloss-title="Quality Score" data-gloss-expl="A score (0-100) measuring the company&#39;s financial quality: profitability consistency, return on capital, balance sheet strength, and earnings predictability." data-gloss-graham="Quality comes before price. Buffett evolved Graham&#39;s framework: &#39;It&#39;s far better to buy a wonderful company at a fair price than a fair company at a wonderful price.&#39;">?</span>
+                </div>
             </div>
             <div class="stat-card">
                 <div class="value">$18.00</div>
-                <div class="label">Current Price</div>
+                <div class="label">Current Price
+                    <span class="help-icon" data-gloss-title="Current Price" data-gloss-expl="The latest market price per share from the stock exchange." data-gloss-graham="Mr. Market offers a price every day — sometimes too high, sometimes too low. Your job is to buy only when the price is significantly below intrinsic value.">?</span>
+                </div>
             </div>
             <div class="stat-card">
                 <div class="value">$2.2B</div>
-                <div class="label">Market Cap</div>
+                <div class="label">Market Cap
+                    <span class="help-icon" data-gloss-title="Market Cap (Market Capitalization)" data-gloss-expl="The total value the stock market places on the entire company (share price × total shares outstanding). It tells you the company&#39;s size." data-gloss-graham="Graham preferred mid-to-large cap companies for safety. Buffett evolved to favor any size — what matters is the business quality and price, not the size alone.">?</span>
+                </div>
             </div>
         </div>
 
@@ -77,7 +88,10 @@
                 
                 
                 <div class="metric-card">
-                    <div class="metric-label">Pe Ratio</div>
+                    <div class="metric-label">
+                        Pe Ratio
+                        <span class="help-icon" data-gloss-title="P/E Ratio (Price-to-Earnings)" data-gloss-expl="How much investors pay per dollar of earnings. A P/E of 15 means you pay $15 for every $1 of annual profit." data-gloss-graham="Graham insisted on buying only when P/E is below 15. A low P/E suggests the stock is cheap relative to its earnings — but always check that earnings are real and sustainable.">?</span>
+                    </div>
                     <div class="metric-value">
                         
                             6.47
@@ -88,7 +102,10 @@
                 
                 
                 <div class="metric-card">
-                    <div class="metric-label">Forward Pe</div>
+                    <div class="metric-label">
+                        Forward Pe
+                        <span class="help-icon" data-gloss-title="Forward P/E" data-gloss-expl="Same as P/E, but uses analysts&#39; estimated future earnings instead of last year&#39;s reported earnings." data-gloss-graham="Graham was skeptical of forecasts. Use forward P/E as a sanity check — if it&#39;s much lower than trailing P/E, ask why analysts expect a big jump.">?</span>
+                    </div>
                     <div class="metric-value">
                         
                             9.05
@@ -99,7 +116,10 @@
                 
                 
                 <div class="metric-card">
-                    <div class="metric-label">Pb Ratio</div>
+                    <div class="metric-label">
+                        Pb Ratio
+                        <span class="help-icon" data-gloss-title="P/B Ratio (Price-to-Book)" data-gloss-expl="Compares the stock price to the company&#39;s net asset value (what you&#39;d get if you sold everything and paid all debts). P/B of 1.0 means you&#39;re paying exactly book value." data-gloss-graham="Graham&#39;s classic rule: never pay more than 1.5× book value. A stock trading below book value may be a bargain — the market is pricing it below liquidation value.">?</span>
+                    </div>
                     <div class="metric-value">
                         
                             0.65
@@ -110,7 +130,10 @@
                 
                 
                 <div class="metric-card">
-                    <div class="metric-label">Ev Ebitda</div>
+                    <div class="metric-label">
+                        Ev Ebitda
+                        <span class="help-icon" data-gloss-title="EV/EBITDA" data-gloss-expl="Enterprise Value divided by earnings before interest, taxes, depreciation &amp; amortization. It measures how many years of operating cash it would take to buy the whole company (including its debt)." data-gloss-graham="Buffett likes EV/EBITDA below 10. It strips out accounting tricks and capital structure differences, giving a cleaner picture of value than P/E alone.">?</span>
+                    </div>
                     <div class="metric-value">
                         
                             3.48
@@ -121,7 +144,10 @@
                 
                 
                 <div class="metric-card">
-                    <div class="metric-label">Roe</div>
+                    <div class="metric-label">
+                        Roe
+                        <span class="help-icon" data-gloss-title="ROE (Return on Equity)" data-gloss-expl="How much profit the company generates for each dollar shareholders have invested. An ROE of 15% means $0.15 profit per $1 of equity." data-gloss-graham="Buffett seeks companies with consistently high ROE (above 15%). It signals a durable competitive advantage — the business earns strong returns without needing excessive capital.">?</span>
+                    </div>
                     <div class="metric-value">
                         
                             10.4%
@@ -134,7 +160,10 @@
                 
                 
                 <div class="metric-card">
-                    <div class="metric-label">Gross Margin</div>
+                    <div class="metric-label">
+                        Gross Margin
+                        <span class="help-icon" data-gloss-title="Gross Margin" data-gloss-expl="Percentage of revenue left after subtracting the direct cost of making the product. A 40% gross margin means $0.40 of every $1 in sales is available to cover operations and profit." data-gloss-graham="Buffett looks for gross margins above 40% as a sign of pricing power — a company that can charge premium prices likely has a moat protecting it from competitors.">?</span>
+                    </div>
                     <div class="metric-value">
                         
                             30.2%
@@ -145,7 +174,10 @@
                 
                 
                 <div class="metric-card">
-                    <div class="metric-label">Operating Margin</div>
+                    <div class="metric-label">
+                        Operating Margin
+                        <span class="help-icon" data-gloss-title="Operating Margin" data-gloss-expl="Percentage of revenue remaining after all operating costs (salaries, rent, R&amp;D) but before interest and taxes. It shows how efficiently the core business runs." data-gloss-graham="Stable or growing operating margins over many years signal a well-managed business. Wide margins provide a cushion of safety during recessions.">?</span>
+                    </div>
                     <div class="metric-value">
                         
                             -72.8%
@@ -156,7 +188,10 @@
                 
                 
                 <div class="metric-card">
-                    <div class="metric-label">Net Margin</div>
+                    <div class="metric-label">
+                        Net Margin
+                        <span class="help-icon" data-gloss-title="Net Margin" data-gloss-expl="The bottom line — what percentage of revenue turns into actual profit after everything is paid (costs, interest, taxes)." data-gloss-graham="Graham wanted companies with positive net margins for at least 10 consecutive years. Consistency matters more than the absolute number.">?</span>
+                    </div>
                     <div class="metric-value">
                         
                             7.6%
@@ -169,7 +204,10 @@
                 
                 
                 <div class="metric-card">
-                    <div class="metric-label">Dividend Yield</div>
+                    <div class="metric-label">
+                        Dividend Yield
+                        <span class="help-icon" data-gloss-title="Dividend Yield" data-gloss-expl="Annual dividend per share divided by share price. A 3% yield means $3 per year for every $100 invested." data-gloss-graham="Graham favored companies that pay dividends — it&#39;s proof the profits are real, not just accounting. A long history of uninterrupted dividends signals financial strength.">?</span>
+                    </div>
                     <div class="metric-value">
                         
                             404.0%
@@ -180,7 +218,10 @@
                 
                 
                 <div class="metric-card">
-                    <div class="metric-label">Debt To Equity</div>
+                    <div class="metric-label">
+                        Debt To Equity
+                        <span class="help-icon" data-gloss-title="D/E Ratio (Debt-to-Equity)" data-gloss-expl="Total debt divided by shareholders&#39; equity. A D/E of 0.5 means the company has $0.50 of debt for every $1 of equity. Lower is safer." data-gloss-graham="Graham&#39;s strict rule: D/E must be below 1.0. Low debt means the company can survive downturns without going bankrupt. Buffett agrees — he avoids heavily indebted companies.">?</span>
+                    </div>
                     <div class="metric-value">
                         
                             93.99
@@ -191,7 +232,10 @@
                 
                 
                 <div class="metric-card">
-                    <div class="metric-label">Current Ratio</div>
+                    <div class="metric-label">
+                        Current Ratio
+                        <span class="help-icon" data-gloss-title="Current Ratio" data-gloss-expl="Current assets divided by current liabilities. It measures whether the company can pay its bills due within the next 12 months. A ratio of 2.0 means it has $2 for every $1 it owes." data-gloss-graham="Graham required a current ratio of at least 1.5. Below that, the company may struggle to meet short-term obligations — a red flag for financial health.">?</span>
+                    </div>
                     <div class="metric-value">
                         
                             2.10
@@ -204,7 +248,10 @@
                 
                 
                 <div class="metric-card">
-                    <div class="metric-label">Beta</div>
+                    <div class="metric-label">
+                        Beta
+                        <span class="help-icon" data-gloss-title="Beta (Volatility)" data-gloss-expl="Measures how much the stock swings compared to the overall market. Beta = 1 means it moves with the market; beta &gt; 1 means it&#39;s more volatile; beta &lt; 1 means it&#39;s calmer." data-gloss-graham="Graham focused on value, not volatility. Buffett famously said &#39;volatility is not risk.&#39; However, high-beta stocks require more emotional discipline to hold through drawdowns.">?</span>
+                    </div>
                     <div class="metric-value">
                         
                             1.42
@@ -257,17 +304,26 @@
             <div class="metrics-grid">
                 
                 <div class="metric-card">
-                    <div class="metric-label">Low</div>
+                    <div class="metric-label">
+                        Low
+                        <span class="help-icon" data-gloss-title="Intrinsic Value — Conservative" data-gloss-expl="The lowest estimate of the company&#39;s true worth, calculated using pessimistic assumptions about growth, margins, and discount rates." data-gloss-graham="Graham would focus here. The conservative estimate assumes things go somewhat wrong — buying below this price gives you the strongest margin of safety.">?</span>
+                    </div>
                     <div class="metric-value" style="color: var(--green);">$43.05</div>
                 </div>
                 
                 <div class="metric-card">
-                    <div class="metric-label">Base</div>
+                    <div class="metric-label">
+                        Base
+                        <span class="help-icon" data-gloss-title="Intrinsic Value — Base Case" data-gloss-expl="The middle estimate of intrinsic worth, using moderate growth assumptions and normal discount rates. This is the &#39;most likely&#39; fair value." data-gloss-graham="A reasonable target. If the current price is well below the base case, the stock deserves serious consideration.">?</span>
+                    </div>
                     <div class="metric-value" style="color: var(--green);">$53.81</div>
                 </div>
                 
                 <div class="metric-card">
-                    <div class="metric-label">High</div>
+                    <div class="metric-label">
+                        High
+                        <span class="help-icon" data-gloss-title="Intrinsic Value — Optimistic" data-gloss-expl="The highest estimate of fair value, assuming favorable growth, margin expansion, and lower risk. Represents the best-case scenario." data-gloss-graham="Use this with caution. Graham warned against over-optimism. The gap between &#39;low&#39; and &#39;high&#39; shows how uncertain the valuation is.">?</span>
+                    </div>
                     <div class="metric-value" style="color: var(--green);">$64.57</div>
                 </div>
                 
@@ -549,9 +605,25 @@
 
     <footer>
         <div class="container">
-            <p>Generated by <strong>STOKS Value Investing Scanner</strong> — 2026-03-01 18:36</p>
+            <p>Generated by <strong>STOKS Value Investing Scanner</strong> — 2026-03-01 18:44</p>
             <p style="margin-top: 4px;">Graham-Buffett Framework • Not Financial Advice • For Research Only</p>
         </div>
     </footer>
+
+    <!-- Glossary Help Modal -->
+    <div id="glossary-overlay" class="glossary-overlay">
+        <div class="glossary-modal">
+            <button class="gm-close" aria-label="Close">&times;</button>
+            <h3 class="gm-title"></h3>
+            <div class="gm-section">
+                <div class="gm-heading">What is it?</div>
+                <div class="gm-text gm-expl"></div>
+            </div>
+            <div class="gm-section">
+                <div class="gm-heading">Graham &amp; Buffett say</div>
+                <div class="gm-graham gm-graham-text"></div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

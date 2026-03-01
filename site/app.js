@@ -85,3 +85,36 @@
         });
     });
 })();
+
+/* Glossary Help Popup */
+(function() {
+    'use strict';
+    const overlay = document.getElementById('glossary-overlay');
+    if (!overlay) return;
+    const modal = overlay.querySelector('.glossary-modal');
+    const titleEl = modal?.querySelector('.gm-title');
+    const explEl = modal?.querySelector('.gm-expl');
+    const grahamEl = modal?.querySelector('.gm-graham-text');
+    const closeBtn = modal?.querySelector('.gm-close');
+
+    document.addEventListener('click', e => {
+        const icon = e.target.closest('.help-icon');
+        if (!icon) return;
+        e.stopPropagation();
+        const t = icon.dataset.glossTitle || '';
+        const ex = icon.dataset.glossExpl || '';
+        const gr = icon.dataset.glossGraham || '';
+        if (titleEl) titleEl.textContent = t;
+        if (explEl) explEl.textContent = ex;
+        if (grahamEl) grahamEl.textContent = gr;
+        overlay.classList.add('active');
+    });
+
+    if (closeBtn) closeBtn.addEventListener('click', () => overlay.classList.remove('active'));
+    overlay.addEventListener('click', e => {
+        if (e.target === overlay) overlay.classList.remove('active');
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') overlay.classList.remove('active');
+    });
+})();

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ ticker }} — {{ name }} | STOKS</title>
     <link rel="stylesheet" href="../style.css">
+    <script src="../app.js" defer></script>
 </head>
 <body>
     <div class="disclaimer">
@@ -47,25 +48,35 @@
         <div class="stats-strip">
             <div class="stat-card">
                 <div class="value">{{ final_score|fmt_num(0) }}</div>
-                <div class="label">Final Score</div>
+                <div class="label">Final Score
+                    {% if glossary.final_score %}<span class="help-icon" data-gloss-title="{{ glossary.final_score.title }}" data-gloss-expl="{{ glossary.final_score.explanation }}" data-gloss-graham="{{ glossary.final_score.graham }}">?</span>{% endif %}
+                </div>
             </div>
             <div class="stat-card">
                 <div class="value" style="color: {% if margin_of_safety >= 0.45 %}var(--green){% elif margin_of_safety >= 0.30 %}var(--yellow){% else %}var(--red){% endif %};">
                     {{ margin_of_safety|fmt_pct }}
                 </div>
-                <div class="label">Margin of Safety</div>
+                <div class="label">Margin of Safety
+                    {% if glossary.margin_of_safety %}<span class="help-icon" data-gloss-title="{{ glossary.margin_of_safety.title }}" data-gloss-expl="{{ glossary.margin_of_safety.explanation }}" data-gloss-graham="{{ glossary.margin_of_safety.graham }}">?</span>{% endif %}
+                </div>
             </div>
             <div class="stat-card">
                 <div class="value">{{ quality_score|fmt_num(0) }}</div>
-                <div class="label">Quality Score</div>
+                <div class="label">Quality Score
+                    {% if glossary.quality_score %}<span class="help-icon" data-gloss-title="{{ glossary.quality_score.title }}" data-gloss-expl="{{ glossary.quality_score.explanation }}" data-gloss-graham="{{ glossary.quality_score.graham }}">?</span>{% endif %}
+                </div>
             </div>
             <div class="stat-card">
                 <div class="value">{{ price|fmt_dollar }}</div>
-                <div class="label">Current Price</div>
+                <div class="label">Current Price
+                    {% if glossary.current_price %}<span class="help-icon" data-gloss-title="{{ glossary.current_price.title }}" data-gloss-expl="{{ glossary.current_price.explanation }}" data-gloss-graham="{{ glossary.current_price.graham }}">?</span>{% endif %}
+                </div>
             </div>
             <div class="stat-card">
                 <div class="value">{{ market_cap|fmt_dollar }}</div>
-                <div class="label">Market Cap</div>
+                <div class="label">Market Cap
+                    {% if glossary.market_cap %}<span class="help-icon" data-gloss-title="{{ glossary.market_cap.title }}" data-gloss-expl="{{ glossary.market_cap.explanation }}" data-gloss-graham="{{ glossary.market_cap.graham }}">?</span>{% endif %}
+                </div>
             </div>
         </div>
 
@@ -77,7 +88,10 @@
                 {% for key, val in metrics.items() %}
                 {% if val is not none %}
                 <div class="metric-card">
-                    <div class="metric-label">{{ key|replace('_', ' ')|title }}</div>
+                    <div class="metric-label">
+                        {{ key|replace('_', ' ')|title }}
+                        {% if glossary[key] %}<span class="help-icon" data-gloss-title="{{ glossary[key].title }}" data-gloss-expl="{{ glossary[key].explanation }}" data-gloss-graham="{{ glossary[key].graham }}">?</span>{% endif %}
+                    </div>
                     <div class="metric-value">
                         {% if 'margin' in key or 'yield' in key or key in ['roe', 'roic'] %}
                             {{ val|fmt_pct }}
@@ -134,7 +148,10 @@
             <div class="metrics-grid">
                 {% for method, val in intrinsic_range.items() %}
                 <div class="metric-card">
-                    <div class="metric-label">{{ method|replace('_', ' ')|title }}</div>
+                    <div class="metric-label">
+                        {{ method|replace('_', ' ')|title }}
+                        {% if glossary[method] %}<span class="help-icon" data-gloss-title="{{ glossary[method].title }}" data-gloss-expl="{{ glossary[method].explanation }}" data-gloss-graham="{{ glossary[method].graham }}">?</span>{% endif %}
+                    </div>
                     <div class="metric-value" style="color: var(--green);">{{ val|fmt_dollar }}</div>
                 </div>
                 {% endfor %}
@@ -342,5 +359,21 @@
             <p style="margin-top: 4px;">Graham-Buffett Framework • Not Financial Advice • For Research Only</p>
         </div>
     </footer>
+
+    <!-- Glossary Help Modal -->
+    <div id="glossary-overlay" class="glossary-overlay">
+        <div class="glossary-modal">
+            <button class="gm-close" aria-label="Close">&times;</button>
+            <h3 class="gm-title"></h3>
+            <div class="gm-section">
+                <div class="gm-heading">What is it?</div>
+                <div class="gm-text gm-expl"></div>
+            </div>
+            <div class="gm-section">
+                <div class="gm-heading">Graham &amp; Buffett say</div>
+                <div class="gm-graham gm-graham-text"></div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

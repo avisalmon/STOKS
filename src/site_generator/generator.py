@@ -32,6 +32,130 @@ from src.run_manager import RunManager
 # Template directory relative to this file
 TEMPLATE_DIR = Path(__file__).parent / "templates"
 
+# ---------------------------------------------------------------------------
+# Glossary — plain-English explanations + Graham-Buffett perspective
+# ---------------------------------------------------------------------------
+GLOSSARY: dict[str, dict[str, str]] = {
+    # Key Metrics
+    "pe_ratio": {
+        "title": "P/E Ratio (Price-to-Earnings)",
+        "explanation": "How much investors pay per dollar of earnings. A P/E of 15 means you pay $15 for every $1 of annual profit.",
+        "graham": "Graham insisted on buying only when P/E is below 15. A low P/E suggests the stock is cheap relative to its earnings — but always check that earnings are real and sustainable.",
+    },
+    "forward_pe": {
+        "title": "Forward P/E",
+        "explanation": "Same as P/E, but uses analysts' estimated future earnings instead of last year's reported earnings.",
+        "graham": "Graham was skeptical of forecasts. Use forward P/E as a sanity check — if it's much lower than trailing P/E, ask why analysts expect a big jump.",
+    },
+    "pb_ratio": {
+        "title": "P/B Ratio (Price-to-Book)",
+        "explanation": "Compares the stock price to the company's net asset value (what you'd get if you sold everything and paid all debts). P/B of 1.0 means you're paying exactly book value.",
+        "graham": "Graham's classic rule: never pay more than 1.5× book value. A stock trading below book value may be a bargain — the market is pricing it below liquidation value.",
+    },
+    "ev_ebitda": {
+        "title": "EV/EBITDA",
+        "explanation": "Enterprise Value divided by earnings before interest, taxes, depreciation & amortization. It measures how many years of operating cash it would take to buy the whole company (including its debt).",
+        "graham": "Buffett likes EV/EBITDA below 10. It strips out accounting tricks and capital structure differences, giving a cleaner picture of value than P/E alone.",
+    },
+    "roe": {
+        "title": "ROE (Return on Equity)",
+        "explanation": "How much profit the company generates for each dollar shareholders have invested. An ROE of 15% means $0.15 profit per $1 of equity.",
+        "graham": "Buffett seeks companies with consistently high ROE (above 15%). It signals a durable competitive advantage — the business earns strong returns without needing excessive capital.",
+    },
+    "roic": {
+        "title": "ROIC (Return on Invested Capital)",
+        "explanation": "Like ROE, but includes debt. It measures how efficiently the company uses ALL capital (equity + debt) to generate profits.",
+        "graham": "ROIC above 10% indicates the company earns more than its cost of capital — it's genuinely creating value rather than destroying it. Buffett considers this a hallmark of great businesses.",
+    },
+    "gross_margin": {
+        "title": "Gross Margin",
+        "explanation": "Percentage of revenue left after subtracting the direct cost of making the product. A 40% gross margin means $0.40 of every $1 in sales is available to cover operations and profit.",
+        "graham": "Buffett looks for gross margins above 40% as a sign of pricing power — a company that can charge premium prices likely has a moat protecting it from competitors.",
+    },
+    "operating_margin": {
+        "title": "Operating Margin",
+        "explanation": "Percentage of revenue remaining after all operating costs (salaries, rent, R&D) but before interest and taxes. It shows how efficiently the core business runs.",
+        "graham": "Stable or growing operating margins over many years signal a well-managed business. Wide margins provide a cushion of safety during recessions.",
+    },
+    "net_margin": {
+        "title": "Net Margin",
+        "explanation": "The bottom line — what percentage of revenue turns into actual profit after everything is paid (costs, interest, taxes).",
+        "graham": "Graham wanted companies with positive net margins for at least 10 consecutive years. Consistency matters more than the absolute number.",
+    },
+    "fcf_yield": {
+        "title": "FCF Yield (Free Cash Flow Yield)",
+        "explanation": "Free cash flow divided by market cap. Think of it as the company's real cash return on its stock price. A 10% yield means the company generates $0.10 of free cash per $1 of market value.",
+        "graham": "Buffett cares deeply about free cash flow — it's the cash left after running and maintaining the business. High FCF yield means you're getting a lot of real cash for the price.",
+    },
+    "dividend_yield": {
+        "title": "Dividend Yield",
+        "explanation": "Annual dividend per share divided by share price. A 3% yield means $3 per year for every $100 invested.",
+        "graham": "Graham favored companies that pay dividends — it's proof the profits are real, not just accounting. A long history of uninterrupted dividends signals financial strength.",
+    },
+    "debt_to_equity": {
+        "title": "D/E Ratio (Debt-to-Equity)",
+        "explanation": "Total debt divided by shareholders' equity. A D/E of 0.5 means the company has $0.50 of debt for every $1 of equity. Lower is safer.",
+        "graham": "Graham's strict rule: D/E must be below 1.0. Low debt means the company can survive downturns without going bankrupt. Buffett agrees — he avoids heavily indebted companies.",
+    },
+    "current_ratio": {
+        "title": "Current Ratio",
+        "explanation": "Current assets divided by current liabilities. It measures whether the company can pay its bills due within the next 12 months. A ratio of 2.0 means it has $2 for every $1 it owes.",
+        "graham": "Graham required a current ratio of at least 1.5. Below that, the company may struggle to meet short-term obligations — a red flag for financial health.",
+    },
+    "interest_coverage": {
+        "title": "Interest Coverage",
+        "explanation": "Operating income divided by interest expense. It shows how easily the company can pay interest on its debt. A ratio of 5 means profits cover interest payments 5 times over.",
+        "graham": "Graham wanted interest coverage of at least 3×. Lower coverage means the company is dangerously close to not being able to service its debt, especially in a downturn.",
+    },
+    "beta": {
+        "title": "Beta (Volatility)",
+        "explanation": "Measures how much the stock swings compared to the overall market. Beta = 1 means it moves with the market; beta > 1 means it's more volatile; beta < 1 means it's calmer.",
+        "graham": "Graham focused on value, not volatility. Buffett famously said 'volatility is not risk.' However, high-beta stocks require more emotional discipline to hold through drawdowns.",
+    },
+    # Stat cards
+    "final_score": {
+        "title": "Final Score",
+        "explanation": "A composite score (0-100) combining quality, valuation, financial health, and safety metrics from all six pipeline stages.",
+        "graham": "The higher the score, the more closely the stock matches the Graham-Buffett criteria. Scores above 70 indicate strong candidates; above 80 is exceptional.",
+    },
+    "margin_of_safety": {
+        "title": "Margin of Safety",
+        "explanation": "How far below intrinsic value the stock trades. A 40% margin of safety means you're buying at a 40% discount to its estimated true worth.",
+        "graham": "This is Graham's most important concept. He insisted on at least a 30% margin of safety — buying well below value protects you from errors in your analysis and market downturns.",
+    },
+    "quality_score": {
+        "title": "Quality Score",
+        "explanation": "A score (0-100) measuring the company's financial quality: profitability consistency, return on capital, balance sheet strength, and earnings predictability.",
+        "graham": "Quality comes before price. Buffett evolved Graham's framework: 'It's far better to buy a wonderful company at a fair price than a fair company at a wonderful price.'",
+    },
+    "current_price": {
+        "title": "Current Price",
+        "explanation": "The latest market price per share from the stock exchange.",
+        "graham": "Mr. Market offers a price every day — sometimes too high, sometimes too low. Your job is to buy only when the price is significantly below intrinsic value.",
+    },
+    "market_cap": {
+        "title": "Market Cap (Market Capitalization)",
+        "explanation": "The total value the stock market places on the entire company (share price × total shares outstanding). It tells you the company's size.",
+        "graham": "Graham preferred mid-to-large cap companies for safety. Buffett evolved to favor any size — what matters is the business quality and price, not the size alone.",
+    },
+    # Intrinsic value methods
+    "low": {
+        "title": "Intrinsic Value — Conservative",
+        "explanation": "The lowest estimate of the company's true worth, calculated using pessimistic assumptions about growth, margins, and discount rates.",
+        "graham": "Graham would focus here. The conservative estimate assumes things go somewhat wrong — buying below this price gives you the strongest margin of safety.",
+    },
+    "base": {
+        "title": "Intrinsic Value — Base Case",
+        "explanation": "The middle estimate of intrinsic worth, using moderate growth assumptions and normal discount rates. This is the 'most likely' fair value.",
+        "graham": "A reasonable target. If the current price is well below the base case, the stock deserves serious consideration.",
+    },
+    "high": {
+        "title": "Intrinsic Value — Optimistic",
+        "explanation": "The highest estimate of fair value, assuming favorable growth, margin expansion, and lower risk. Represents the best-case scenario.",
+        "graham": "Use this with caution. Graham warned against over-optimism. The gap between 'low' and 'high' shows how uncertain the valuation is.",
+    },
+}
+
 
 def generate_site(
     results: dict[str, Any],
@@ -100,6 +224,7 @@ def generate_site(
             ticker_data = _build_ticker_detail(c)
             ticker_html = ticker_tmpl.render(
                 **ticker_data,
+                glossary=GLOSSARY,
                 generated_at=generated_at,
             )
             ticker_path = ticker_dir / f"{c['ticker']}.html"
@@ -686,6 +811,58 @@ footer {
 .sparkline-card .sparkline-chart { display: flex; justify-content: center; }
 .sparkline-card svg.sparkline { display: block; }
 
+/* Help Tooltip (?) */
+.help-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--bg-tertiary); border: 1px solid var(--border);
+    color: var(--text-muted); font-size: 0.65rem; font-weight: 700;
+    cursor: pointer; margin-left: 6px; vertical-align: middle;
+    transition: all var(--transition); flex-shrink: 0;
+}
+.help-icon:hover { background: var(--accent); color: var(--bg-primary); border-color: var(--accent); }
+.metric-label { display: flex; align-items: center; }
+.stat-card .label { display: flex; align-items: center; justify-content: center; gap: 4px; }
+
+/* Glossary Modal Overlay */
+.glossary-overlay {
+    display: none; position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center; padding: 20px;
+}
+.glossary-overlay.active { display: flex; }
+.glossary-modal {
+    background: var(--bg-secondary); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 28px 32px;
+    max-width: 520px; width: 100%; box-shadow: var(--shadow-lg);
+    position: relative; animation: glossaryIn 0.2s ease;
+}
+@keyframes glossaryIn {
+    from { opacity: 0; transform: translateY(10px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.glossary-modal .gm-close {
+    position: absolute; top: 14px; right: 16px;
+    background: none; border: none; color: var(--text-muted);
+    font-size: 1.3rem; cursor: pointer; line-height: 1;
+    transition: color var(--transition);
+}
+.glossary-modal .gm-close:hover { color: var(--text-primary); }
+.glossary-modal h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 14px; color: var(--accent); }
+.glossary-modal .gm-section { margin-bottom: 14px; }
+.glossary-modal .gm-section:last-child { margin-bottom: 0; }
+.glossary-modal .gm-heading {
+    font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 6px;
+}
+.glossary-modal .gm-text { font-size: 0.9rem; line-height: 1.6; color: var(--text-primary); }
+.glossary-modal .gm-graham {
+    background: rgba(63,185,80,0.08); border-left: 3px solid var(--green);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 10px 14px; font-size: 0.85rem; line-height: 1.6;
+    color: var(--text-secondary); margin-top: 4px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .container { padding: 0 16px; }
@@ -784,6 +961,39 @@ def _get_js_content() -> str:
             document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
             document.getElementById(target)?.classList.add('active');
         });
+    });
+})();
+
+/* Glossary Help Popup */
+(function() {
+    'use strict';
+    const overlay = document.getElementById('glossary-overlay');
+    if (!overlay) return;
+    const modal = overlay.querySelector('.glossary-modal');
+    const titleEl = modal?.querySelector('.gm-title');
+    const explEl = modal?.querySelector('.gm-expl');
+    const grahamEl = modal?.querySelector('.gm-graham-text');
+    const closeBtn = modal?.querySelector('.gm-close');
+
+    document.addEventListener('click', e => {
+        const icon = e.target.closest('.help-icon');
+        if (!icon) return;
+        e.stopPropagation();
+        const t = icon.dataset.glossTitle || '';
+        const ex = icon.dataset.glossExpl || '';
+        const gr = icon.dataset.glossGraham || '';
+        if (titleEl) titleEl.textContent = t;
+        if (explEl) explEl.textContent = ex;
+        if (grahamEl) grahamEl.textContent = gr;
+        overlay.classList.add('active');
+    });
+
+    if (closeBtn) closeBtn.addEventListener('click', () => overlay.classList.remove('active'));
+    overlay.addEventListener('click', e => {
+        if (e.target === overlay) overlay.classList.remove('active');
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') overlay.classList.remove('active');
     });
 })();
 """

@@ -635,6 +635,20 @@ header nav a:hover { color: var(--text-primary); }
     font-weight: 500;
 }
 
+/* Data Freshness Banner */
+.data-freshness {
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 10px 20px;
+    text-align: center;
+    font-size: 0.82rem;
+    line-height: 1.5;
+}
+.data-freshness strong {
+    color: var(--accent);
+}
+
 /* Stats Strip */
 .stats-strip {
     display: grid;

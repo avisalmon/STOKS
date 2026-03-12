@@ -405,7 +405,7 @@ class YFinanceProvider(DataProvider):
             import requests
 
             url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
-            headers = {"User-Agent": "STOKS-ValueScanner/1.0 (educational-project)"}
+            headers = {"User-Agent": "STOKS-ValueScanner/1.0 (educational-project; https://github.com/avisalmon/STOKS)"}
             resp = requests.get(url, headers=headers, timeout=30)
             resp.raise_for_status()
 
@@ -431,7 +431,7 @@ class YFinanceProvider(DataProvider):
             import requests
 
             url = "https://en.wikipedia.org/wiki/List_of_S%26P_400_companies"
-            headers = {"User-Agent": "STOKS-ValueScanner/1.0 (educational-project)"}
+            headers = {"User-Agent": "STOKS-ValueScanner/1.0 (educational-project; https://github.com/avisalmon/STOKS)"}
             resp = requests.get(url, headers=headers, timeout=30)
             resp.raise_for_status()
 

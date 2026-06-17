@@ -333,7 +333,7 @@ def _build_candidate_row(c: dict) -> dict:
         "debt_to_equity": data.metrics.debt_to_equity if data else me.get("debt_to_equity"),
         "intrinsic_low": _safe_min(iv),
         "intrinsic_high": _safe_max(iv),
-        "sparklines": _extract_sparkline_data(data),
+        "sparklines": _extract_sparkline_data(data, c.get("financials") if not data else None),
     }
 
 
@@ -384,7 +384,7 @@ def _build_ticker_detail(c: dict) -> dict:
         "stage_f": stages.get("f", {}),
         "income_history": [],
         "cashflow_history": [],
-        "sparklines": _extract_sparkline_data(data),
+        "sparklines": _extract_sparkline_data(data, c.get("financials") if not data else None),
     }
 
     if data and data.metrics:
@@ -551,34 +551,43 @@ def _sparkline_svg(
     return Markup(svg)
 
 
-def _extract_sparkline_data(data) -> dict[str, list]:
-    """Extract sparkline-ready lists from TickerData financial history."""
+def _extract_sparkline_data(data, financials_json: dict | None = None) -> dict[str, list]:
+    """Extract sparkline-ready lists from TickerData or a flat financials JSON dict."""
     sparklines: dict[str, list] = {
         "revenue": [],
         "eps": [],
         "net_income": [],
         "fcf": [],
     }
-    if data is None or data.financials is None:
-        return sparklines
-    inc = data.financials.income
-    if inc is not None and not inc.empty:
-        for year in sorted(inc.index):
-            if "revenue" in inc.columns:
-                v = inc.loc[year, "revenue"]
-                sparklines["revenue"].append(float(v) if pd.notna(v) else None)
-            if "eps" in inc.columns:
-                v = inc.loc[year, "eps"]
-                sparklines["eps"].append(float(v) if pd.notna(v) else None)
-            if "net_income" in inc.columns:
-                v = inc.loc[year, "net_income"]
-                sparklines["net_income"].append(float(v) if pd.notna(v) else None)
-    cf = data.financials.cashflow
-    if cf is not None and not cf.empty:
-        for year in sorted(cf.index):
-            if "free_cash_flow" in cf.columns:
-                v = cf.loc[year, "free_cash_flow"]
-                sparklines["fcf"].append(float(v) if pd.notna(v) else None)
+    if data is not None and data.financials is not None:
+        inc = data.financials.income
+        if inc is not None and not inc.empty:
+            for year in sorted(inc.index):
+                if "revenue" in inc.columns:
+                    v = inc.loc[year, "revenue"]
+                    sparklines["revenue"].append(float(v) if pd.notna(v) else None)
+                if "eps" in inc.columns:
+                    v = inc.loc[year, "eps"]
+                    sparklines["eps"].append(float(v) if pd.notna(v) else None)
+                if "net_income" in inc.columns:
+                    v = inc.loc[year, "net_income"]
+                    sparklines["net_income"].append(float(v) if pd.notna(v) else None)
+        cf = data.financials.cashflow
+        if cf is not None and not cf.empty:
+            for year in sorted(cf.index):
+                if "free_cash_flow" in cf.columns:
+                    v = cf.loc[year, "free_cash_flow"]
+                    sparklines["fcf"].append(float(v) if pd.notna(v) else None)
+    elif financials_json:
+        inc = financials_json.get("income", {})
+        for year in sorted(inc.keys()):
+            row = inc[year]
+            sparklines["revenue"].append(row.get("revenue"))
+            sparklines["eps"].append(row.get("eps"))
+            sparklines["net_income"].append(row.get("net_income"))
+        cf = financials_json.get("cashflow", {})
+        for year in sorted(cf.keys()):
+            sparklines["fcf"].append(cf[year].get("free_cash_flow"))
     return sparklines
 
 

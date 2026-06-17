@@ -308,26 +308,31 @@ def generate_site(
 def _build_candidate_row(c: dict) -> dict:
     """Build a flat dict for a candidate row in the index table."""
     data = c.get("data")
+    # Flat-dict fallbacks used when regenerating site from saved report.json
+    co = c.get("company", {})
+    pr = c.get("price", {})
+    me = c.get("metrics", {})
+    iv = c.get("valuation", {}).get("intrinsic_range", c.get("intrinsic_range", {}))
     return {
         "ticker": c["ticker"],
-        "name": data.info.name if data else c["ticker"],
+        "name": data.info.name if data else co.get("name", c["ticker"]),
         "signal": c["signal"],
         "final_score": c.get("final_score", 0),
         "margin_of_safety": c.get("margin_of_safety", 0),
         "quality_score": c.get("quality_score", 0),
         "cyclicality": c.get("cyclicality", "UNKNOWN"),
         "trap_count": len(c.get("trap_flags", [])),
-        "sector": data.info.sector if data else "",
-        "industry": data.info.industry if data else "",
-        "price": data.price.current_price if data else 0,
-        "market_cap": data.price.market_cap if data else 0,
-        "pe_ratio": data.metrics.pe_ratio if data else None,
-        "roe": data.metrics.roe if data else None,
-        "roic": data.metrics.roic if data else None,
-        "fcf_yield": data.metrics.fcf_yield if data else None,
-        "debt_to_equity": data.metrics.debt_to_equity if data else None,
-        "intrinsic_low": _safe_min(c.get("intrinsic_range", {})),
-        "intrinsic_high": _safe_max(c.get("intrinsic_range", {})),
+        "sector": data.info.sector if data else co.get("sector", ""),
+        "industry": data.info.industry if data else co.get("industry", ""),
+        "price": data.price.current_price if data else pr.get("current_price", 0),
+        "market_cap": data.price.market_cap if data else pr.get("market_cap", 0),
+        "pe_ratio": data.metrics.pe_ratio if data else me.get("pe_ratio"),
+        "roe": data.metrics.roe if data else me.get("roe"),
+        "roic": data.metrics.roic if data else me.get("roic"),
+        "fcf_yield": data.metrics.fcf_yield if data else me.get("fcf_yield"),
+        "debt_to_equity": data.metrics.debt_to_equity if data else me.get("debt_to_equity"),
+        "intrinsic_low": _safe_min(iv),
+        "intrinsic_high": _safe_max(iv),
         "sparklines": _extract_sparkline_data(data),
     }
 
@@ -348,23 +353,28 @@ def _build_ticker_detail(c: dict) -> dict:
     """Build detailed data dict for a ticker detail page."""
     data = c.get("data")
     stages = c.get("stages", {})
+    # Flat-dict fallbacks used when regenerating site from saved report.json
+    co = c.get("company", {})
+    pr = c.get("price", {})
+    me = c.get("metrics", {})
+    iv = c.get("valuation", {}).get("intrinsic_range", c.get("intrinsic_range", {}))
 
     detail = {
         "ticker": c["ticker"],
-        "name": data.info.name if data else c["ticker"],
+        "name": data.info.name if data else co.get("name", c["ticker"]),
         "signal": c["signal"],
         "final_score": c.get("final_score", 0),
         "margin_of_safety": c.get("margin_of_safety", 0),
         "quality_score": c.get("quality_score", 0),
         "cyclicality": c.get("cyclicality", "UNKNOWN"),
         "trap_flags": c.get("trap_flags", []),
-        "sector": data.info.sector if data else "",
-        "industry": data.info.industry if data else "",
-        "exchange": data.info.exchange if data else "",
-        "country": data.info.country if data else "",
-        "price": data.price.current_price if data else 0,
-        "market_cap": data.price.market_cap if data else 0,
-        "intrinsic_range": c.get("intrinsic_range", {}),
+        "sector": data.info.sector if data else co.get("sector", ""),
+        "industry": data.info.industry if data else co.get("industry", ""),
+        "exchange": data.info.exchange if data else co.get("exchange", ""),
+        "country": data.info.country if data else co.get("country", ""),
+        "price": data.price.current_price if data else pr.get("current_price", 0),
+        "market_cap": data.price.market_cap if data else pr.get("market_cap", 0),
+        "intrinsic_range": iv,
         "metrics": {},
         "stage_a": stages.get("a", {}),
         "stage_b": stages.get("b", {}),
@@ -396,6 +406,8 @@ def _build_ticker_detail(c: dict) -> dict:
             "interest_coverage": m.interest_coverage,
             "beta": m.beta,
         }
+    elif me:
+        detail["metrics"] = dict(me)
 
     # Financial history as list of dicts for easy template iteration
     if data and data.financials:
@@ -416,6 +428,17 @@ def _build_ticker_detail(c: dict) -> dict:
                     val = cf.loc[year, col]
                     row[col] = float(val) if pd.notna(val) else None
                 detail["cashflow_history"].append(row)
+
+    elif "financials" in c:
+        fin = c["financials"]
+        for year in sorted(fin.get("income", {}).keys()):
+            row = {"year": int(year)}
+            row.update(fin["income"][year])
+            detail["income_history"].append(row)
+        for year in sorted(fin.get("cashflow", {}).keys()):
+            row = {"year": int(year)}
+            row.update(fin["cashflow"][year])
+            detail["cashflow_history"].append(row)
 
     return detail
 

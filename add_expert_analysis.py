@@ -164,10 +164,9 @@ def _regenerate_site(run_dir: Path) -> None:
     print("\nRegenerating static site...")
     import json
 
-    # Load summary to get results
-    summary_path = run_dir / "exports" / "summary.json"
-    if not summary_path.exists():
-        print("  ⚠ No summary.json found — skipping site regeneration.")
+    reports_dir = run_dir / "reports"
+    if not reports_dir.exists():
+        print("  ⚠ No reports/ directory found — skipping site regeneration.")
         return
 
     try:
@@ -180,14 +179,22 @@ def _regenerate_site(run_dir: Path) -> None:
         run_mgr._run_dir = run_dir
         run_mgr._log_dir = run_dir / "logs"
 
-        with open(summary_path, encoding="utf-8") as f:
-            results = json.load(f)
+        # Load full per-ticker report.json (has company/price/metrics/financials)
+        candidates = []
+        for ticker_dir in sorted(reports_dir.iterdir()):
+            if ticker_dir.is_dir():
+                rj = ticker_dir / "report.json"
+                if rj.exists():
+                    with open(rj, encoding="utf-8") as f:
+                        candidates.append(json.load(f))
 
+        results = {"candidates": candidates, "rejected": [], "errors": []}
         generate_site(results, run_mgr)
         print("  ✓ Site regenerated: index.html + site/ticker/*.html")
     except Exception as e:
         print(f"  ⚠ Site regeneration failed: {e}")
-        print("  Run manually: python -m src.main -t <TICKER> (or just open existing index.html)")
+        import traceback
+        traceback.print_exc()
 
 
 # ---------------------------------------------------------------------------
